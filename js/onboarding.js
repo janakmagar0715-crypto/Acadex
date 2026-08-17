@@ -113,6 +113,15 @@ document.addEventListener("DOMContentLoaded", () => {
     const userAvatar = document.getElementById("userAvatar");
     const userEmailDisplay = document.getElementById("userEmailDisplay");
 
+    // Toggle Interest Chips Selection
+    if (interestsGrid) {
+        interestsGrid.querySelectorAll(".interest-chip").forEach(chip => {
+            chip.addEventListener("click", () => {
+                chip.classList.toggle("selected");
+            });
+        });
+    }
+
     // Dynamic Year-to-Semester Options Mapping
     if (yearSelect && semesterSelect) {
         const semesterOptionsMap = {
