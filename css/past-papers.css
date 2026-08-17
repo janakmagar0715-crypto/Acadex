@@ -1,0 +1,70 @@
+/* ==========================================================================
+   ACADEX PAST EXAMINATION PAPERS V1 STYLES (css/past-papers.css)
+   Direction B Design Tokens, Course Code Badges, Multi-Filter Grid & Modals
+   ========================================================================== */
+
+/* Multi-Select Filter Row Grid */
+.papers-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+/* Exam Type Badges */
+.badge-final {
+  background: rgba(37, 99, 235, 0.12);
+  color: var(--primary);
+  border: 1px solid rgba(37, 99, 235, 0.25);
+}
+
+.badge-midterm {
+  background: rgba(132, 204, 22, 0.14);
+  color: var(--lime);
+  border: 1px solid rgba(132, 204, 22, 0.28);
+}
+
+.badge-quiz {
+  background: rgba(168, 85, 247, 0.14);
+  color: #C084FC;
+  border: 1px solid rgba(168, 85, 247, 0.28);
+}
+
+.badge-model {
+  background: rgba(20, 184, 166, 0.14);
+  color: #2DD4BF;
+  border: 1px solid rgba(20, 184, 166, 0.28);
+}
+
+/* Course Code Pill Tag */
+.course-code-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--surface-secondary);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.paper-modal-badges {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Responsive Media Queries for Filter Grid */
+@media (max-width: 1024px) {
+  .papers-filter-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .papers-filter-grid {
+    grid-template-columns: 1fr;
+  }
+}

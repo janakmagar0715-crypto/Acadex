@@ -4,8 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Academic Resources — Acadex</title>
-    <meta name="description" content="Browse, search, download, and share academic study resources, notes, assignments, and project guides on Acadex.">
+    <title>Past Examination Papers — Acadex</title>
+    <meta name="description" content="Browse, search, download, and share past examination papers, midterms, and solution keys on Acadex.">
     <link rel="icon" type="image/svg+xml" href="../assets/logo/acadex-icon.svg">
 
     <!-- Fonts & Shared Styles -->
@@ -16,9 +16,10 @@
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="../css/dashboard.css">
     <link rel="stylesheet" href="../css/resources.css">
+    <link rel="stylesheet" href="../css/past-papers.css">
 
-    <!-- Resources Logic Module -->
-    <script type="module" src="../js/resources.js"></script>
+    <!-- Past Papers Logic Module -->
+    <script type="module" src="../js/past-papers.js"></script>
 </head>
 
 <body>
@@ -37,8 +38,8 @@
             <!-- Navigation Links -->
             <nav class="nav-links" aria-label="Main Navigation">
                 <a href="dashboard.html" class="nav-link">Dashboard</a>
-                <a href="resources.html" class="nav-link active" aria-current="page">Resources</a>
-                <a href="past-papers.html" class="nav-link" id="navPapersLink">Past Papers</a>
+                <a href="resources.html" class="nav-link">Resources</a>
+                <a href="past-papers.html" class="nav-link active" aria-current="page">Past Papers</a>
                 <a href="#" class="nav-link" id="navMarketplaceLink">Marketplace</a>
             </nav>
 
@@ -81,6 +82,10 @@
                             <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
                             <span>Dashboard</span>
                         </a>
+                        <a href="resources.html" class="dropdown-item" role="menuitem">
+                            <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                            <span>Resources</span>
+                        </a>
                         <button id="logoutBtn" class="dropdown-item logout-item" role="menuitem">
                             <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
                             <span>Sign Out</span>
@@ -106,15 +111,15 @@
         </div>
         <div class="drawer-links">
             <a href="dashboard.html" class="drawer-link">Dashboard</a>
-            <a href="resources.html" class="drawer-link active">Resources</a>
-            <a href="past-papers.html" class="drawer-link">Past Papers</a>
+            <a href="resources.html" class="drawer-link">Resources</a>
+            <a href="past-papers.html" class="drawer-link active">Past Papers</a>
             <a href="#" class="drawer-link">Marketplace</a>
         </div>
     </div>
     <div id="drawerOverlay" class="drawer-overlay"></div>
 
     <!-- --------------------------------------------------------------------
-       2. MAIN RESOURCES LAYOUT
+       2. MAIN PAST PAPERS LAYOUT
        -------------------------------------------------------------------- -->
     <main class="resources-main">
         <div class="resources-container">
@@ -122,12 +127,12 @@
             <!-- Page Header & Action -->
             <div class="resources-header">
                 <div>
-                    <h1 class="page-title">Academic Resources</h1>
-                    <p class="page-subtitle">Browse, download, and share verified study notes, assignments, and project guides.</p>
+                    <h1 class="page-title">Past Examination Papers</h1>
+                    <p class="page-subtitle">Practice with previous semester exam papers, midterms, and solution keys.</p>
                 </div>
                 <button id="openUploadModalBtn" class="btn-primary-lg">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                    <span>Upload Resource</span>
+                    <span>Upload Exam Paper</span>
                 </button>
             </div>
 
@@ -135,18 +140,17 @@
             <div class="filter-card">
                 <div class="search-box">
                     <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                    <input type="text" id="searchInput" class="search-input" placeholder="Search resources by title or subject...">
+                    <input type="text" id="searchInput" class="search-input" placeholder="Search by subject or course code e.g. CS201...">
                 </div>
 
-                <div class="filter-selects-row">
+                <div class="papers-filter-grid">
                     <div class="select-wrapper">
-                        <select id="categoryFilter" class="select-field">
-                            <option value="all">All Categories</option>
-                            <option value="notes">Notes</option>
-                            <option value="assignment">Assignments</option>
-                            <option value="project">Projects</option>
-                            <option value="guide">Guides</option>
-                            <option value="other">Other</option>
+                        <select id="examTypeFilter" class="select-field">
+                            <option value="all">All Exam Types</option>
+                            <option value="final">Final Exam</option>
+                            <option value="midterm">Midterm Exam</option>
+                            <option value="quiz">Quiz / Test</option>
+                            <option value="model">Model Question</option>
                         </select>
                     </div>
 
@@ -180,44 +184,42 @@
                             <option value="Other">Other</option>
                         </select>
                     </div>
+
+                    <div class="select-wrapper">
+                        <select id="yearFilter" class="select-field">
+                            <option value="all">All Academic Years</option>
+                            <option value="2026">2026</option>
+                            <option value="2025">2025</option>
+                            <option value="2024">2024</option>
+                            <option value="2023">2023</option>
+                            <option value="2022">2022</option>
+                            <option value="2021">2021</option>
+                            <option value="Older">Older</option>
+                        </select>
+                    </div>
                 </div>
             </div>
 
-            <!-- Resource Grid / Feed -->
-            <div id="resourcesGrid" class="resources-grid">
+            <!-- Past Papers Grid / Feed -->
+            <div id="papersGrid" class="resources-grid">
                 <!-- Skeleton Shimmer Loader (Shown during fetch) -->
-                <div class="skeleton-card">
-                    <div class="skeleton-badge"></div>
-                    <div class="skeleton-line title"></div>
-                    <div class="skeleton-line meta"></div>
-                    <div class="skeleton-actions"></div>
-                </div>
-                <div class="skeleton-card">
-                    <div class="skeleton-badge"></div>
-                    <div class="skeleton-line title"></div>
-                    <div class="skeleton-line meta"></div>
-                    <div class="skeleton-actions"></div>
-                </div>
-                <div class="skeleton-card">
-                    <div class="skeleton-badge"></div>
-                    <div class="skeleton-line title"></div>
-                    <div class="skeleton-line meta"></div>
-                    <div class="skeleton-actions"></div>
-                </div>
+                <div class="skeleton-card"><div class="skeleton-badge"></div><div class="skeleton-line title"></div><div class="skeleton-line meta"></div><div class="skeleton-actions"></div></div>
+                <div class="skeleton-card"><div class="skeleton-badge"></div><div class="skeleton-line title"></div><div class="skeleton-line meta"></div><div class="skeleton-actions"></div></div>
+                <div class="skeleton-card"><div class="skeleton-badge"></div><div class="skeleton-line title"></div><div class="skeleton-line meta"></div><div class="skeleton-actions"></div></div>
             </div>
 
             <!-- Empty State -->
             <div id="emptyState" class="state-card" style="display: none;">
-                <svg class="state-icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="9" y1="15" x2="15" y2="15"></line></svg>
-                <h3 class="state-title">No resources found</h3>
-                <p class="state-subtitle">No academic resources match your filter criteria. Try adjusting your search query.</p>
+                <svg class="state-icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                <h3 class="state-title">No examination papers found</h3>
+                <p class="state-subtitle">No past papers match your filter criteria. Try searching for a different subject or course code.</p>
             </div>
 
             <!-- Error State -->
             <div id="errorState" class="state-card" style="display: none;">
                 <svg class="state-icon error-color" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-                <h3 class="state-title">Unable to load resources</h3>
-                <p class="state-subtitle">We couldn't connect to Firestore. Please check your network connection and try again.</p>
+                <h3 class="state-title">Unable to load past papers</h3>
+                <p class="state-subtitle">We couldn't connect to Firestore. Please check your connection and try again.</p>
                 <button id="retryFetchBtn" class="btn-secondary" style="margin-top: 12px;">Retry</button>
             </div>
 
@@ -225,37 +227,42 @@
     </main>
 
     <!-- --------------------------------------------------------------------
-       3. UPLOAD RESOURCE MODAL
+       3. UPLOAD PAST PAPER MODAL
        -------------------------------------------------------------------- -->
-    <div id="uploadResourceModal" class="modal-backdrop" style="display: none;">
+    <div id="uploadPaperModal" class="modal-backdrop" style="display: none;">
         <div class="modal-box">
             <div class="modal-header">
-                <h2 class="modal-title">Upload Academic Resource</h2>
+                <h2 class="modal-title">Upload Past Examination Paper</h2>
                 <button id="closeUploadModalBtn" class="btn-icon" aria-label="Close modal">
                     <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                 </button>
             </div>
 
-            <form id="uploadResourceForm" class="modal-form">
-                <div class="form-group">
-                    <label for="resourceTitle" class="form-label">Resource Title *</label>
-                    <input type="text" id="resourceTitle" class="form-input" placeholder="e.g. Data Structures Chapter 1-5 Notes" required>
+            <form id="uploadPaperForm" class="modal-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="paperTitle" class="form-label">Exam Paper Title *</label>
+                        <input type="text" id="paperTitle" class="form-input" placeholder="e.g. DBMS Final Exam Paper 2024" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="courseCode" class="form-label">Course Code (Optional)</label>
+                        <input type="text" id="courseCode" class="form-input" placeholder="e.g. CS302">
+                    </div>
                 </div>
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="resourceSubject" class="form-label">Subject *</label>
-                        <input type="text" id="resourceSubject" class="form-input" placeholder="e.g. Data Structures" required>
+                        <label for="paperSubject" class="form-label">Subject *</label>
+                        <input type="text" id="paperSubject" class="form-input" placeholder="e.g. Database Management Systems" required>
                     </div>
                     <div class="form-group">
-                        <label for="resourceCategory" class="form-label">Category *</label>
+                        <label for="examType" class="form-label">Exam Type *</label>
                         <div class="select-wrapper">
-                            <select id="resourceCategory" class="select-field" required>
-                                <option value="notes">Notes</option>
-                                <option value="assignment">Assignment</option>
-                                <option value="project">Project</option>
-                                <option value="guide">Guide</option>
-                                <option value="other">Other</option>
+                            <select id="examType" class="select-field" required>
+                                <option value="final">Final Exam</option>
+                                <option value="midterm">Midterm Exam</option>
+                                <option value="quiz">Quiz / Test</option>
+                                <option value="model">Model Question</option>
                             </select>
                         </div>
                     </div>
@@ -263,9 +270,9 @@
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="resourceDepartment" class="form-label">Department *</label>
+                        <label for="paperDepartment" class="form-label">Department *</label>
                         <div class="select-wrapper">
-                            <select id="resourceDepartment" class="select-field" required>
+                            <select id="paperDepartment" class="select-field" required>
                                 <option value="Computer Science">Computer Science</option>
                                 <option value="Computer Engineering">Computer Engineering</option>
                                 <option value="Information Technology">Information Technology</option>
@@ -280,9 +287,9 @@
                         </div>
                     </div>
                     <div class="form-group">
-                        <label for="resourceSemester" class="form-label">Semester *</label>
+                        <label for="paperSemester" class="form-label">Semester *</label>
                         <div class="select-wrapper">
-                            <select id="resourceSemester" class="select-field" required>
+                            <select id="paperSemester" class="select-field" required>
                                 <option value="Semester 1">Semester 1</option>
                                 <option value="Semester 2">Semester 2</option>
                                 <option value="Semester 3">Semester 3</option>
@@ -297,21 +304,33 @@
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label for="resourceDescription" class="form-label">Description (Optional)</label>
-                    <textarea id="resourceDescription" class="form-textarea" rows="3" placeholder="Brief details about what this document covers..."></textarea>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="paperYear" class="form-label">Exam Year *</label>
+                        <div class="select-wrapper">
+                            <select id="paperYear" class="select-field" required>
+                                <option value="2026">2026</option>
+                                <option value="2025">2025</option>
+                                <option value="2024">2024</option>
+                                <option value="2023">2023</option>
+                                <option value="2022">2022</option>
+                                <option value="2021">2021</option>
+                                <option value="Older">Older</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="form-group">
-                    <label for="fileInput" class="form-label">Resource File (PDF, DOCX, ZIP - Max 25MB) *</label>
-                    <input type="file" id="fileInput" class="file-input-field" accept=".pdf,.docx,.doc,.zip,.png,.jpg,.jpeg,.webp" required>
-                    <span id="fileInputHint" class="input-hint">Select a file from your computer.</span>
+                    <label for="fileInput" class="form-label">Exam Paper File (PDF or ZIP - Max 25MB) *</label>
+                    <input type="file" id="fileInput" class="file-input-field" accept=".pdf,.zip,.png,.jpg,.jpeg" required>
+                    <span id="fileInputHint" class="input-hint">Upload previous year exam questions or solution keys.</span>
                 </div>
 
                 <div class="modal-footer">
                     <button type="button" id="cancelUploadBtn" class="btn-secondary">Cancel</button>
                     <button type="submit" id="submitUploadBtn" class="btn-primary">
-                        <span id="submitUploadLabel">Upload File & Create Resource</span>
+                        <span id="submitUploadLabel">Upload File & Create Paper</span>
                     </button>
                 </div>
             </form>
@@ -319,12 +338,15 @@
     </div>
 
     <!-- --------------------------------------------------------------------
-       4. RESOURCE DETAILS MODAL
+       4. PAST PAPER DETAILS MODAL
        -------------------------------------------------------------------- -->
-    <div id="resourceDetailsModal" class="modal-backdrop" style="display: none;">
+    <div id="paperDetailsModal" class="modal-backdrop" style="display: none;">
         <div class="modal-box">
             <div class="modal-header">
-                <span id="modalCategoryBadge" class="resource-type-badge">Notes</span>
+                <div class="paper-modal-badges">
+                    <span id="modalExamTypeBadge" class="resource-type-badge badge-paper">FINAL EXAM</span>
+                    <span id="modalCourseCodeBadge" class="course-code-pill" style="display: none;">CS302</span>
+                </div>
                 <button id="closeDetailsModalBtn" class="btn-icon" aria-label="Close modal">
                     <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                 </button>
@@ -334,12 +356,11 @@
                 <h2 id="modalTitle" class="details-title">--</h2>
                 <div id="modalMeta" class="details-meta">-- • --</div>
 
-                <div class="details-section">
-                    <h4 class="details-heading">Description</h4>
-                    <p id="modalDescription" class="details-text">--</p>
-                </div>
-
                 <div class="details-info-grid">
+                    <div class="info-item">
+                        <span class="info-label">Exam Year</span>
+                        <span id="modalExamYear" class="info-val">--</span>
+                    </div>
                     <div class="info-item">
                         <span class="info-label">Uploaded by</span>
                         <span id="modalUploader" class="info-val">--</span>
@@ -347,6 +368,10 @@
                     <div class="info-item">
                         <span class="info-label">File Size</span>
                         <span id="modalFileSize" class="info-val">--</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Department</span>
+                        <span id="modalDept" class="info-val">--</span>
                     </div>
                 </div>
             </div>
@@ -359,7 +384,7 @@
 
                 <a id="modalDownloadBtn" href="#" target="_blank" download class="btn-primary">
                     <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                    <span>Download File</span>
+                    <span>Download Paper</span>
                 </a>
             </div>
         </div>

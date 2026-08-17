@@ -393,7 +393,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // Quick Action Card Demo Toast Handlers
         const demoQuickActions = [
-            { id: "actionPapers", name: "Past Papers Repository" },
             { id: "actionMarketplace", name: "Student Marketplace" }
         ];
 
