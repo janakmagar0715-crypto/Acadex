@@ -436,6 +436,13 @@ document.addEventListener("DOMContentLoaded", () => {
                     // Perform Firestore write with merge
                     await setDoc(userDocRef, userProfilePayload, { merge: true });
 
+                    // Warm up sessionStorage cache for instant page load
+                    sessionStorage.setItem(`acadex_profile_${activeUser.uid}`, JSON.stringify({
+                        exists: true,
+                        profileComplete: true,
+                        data: userProfilePayload
+                    }));
+
                     console.log("Onboarding complete! Firestore user profile created successfully for:", activeUser.uid);
                     isSaveSuccessful = true;
                     showToast("Profile created successfully!", true);

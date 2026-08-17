@@ -34,13 +34,30 @@ export const storage = getStorage(app);
  */
 export async function checkUserProfile(uid) {
     if (!uid) return { exists: false, profileComplete: false, data: null };
+
+    // Check sessionStorage cache for instant 0ms page transitions
+    const cacheKey = `acadex_profile_${uid}`;
+    const cached = sessionStorage.getItem(cacheKey);
+    if (cached) {
+        try {
+            const parsed = JSON.parse(cached);
+            if (parsed && parsed.profileComplete) {
+                return parsed;
+            }
+        } catch (e) { }
+    }
+
     try {
         const userDocRef = doc(db, "users", uid);
         const docSnap = await getDoc(userDocRef);
         if (docSnap.exists()) {
             const data = docSnap.data();
             const profileComplete = data && (data.profileComplete === true || data.profileComplete === "true");
-            return { exists: true, profileComplete, data };
+            const result = { exists: true, profileComplete, data };
+            if (profileComplete) {
+                sessionStorage.setItem(cacheKey, JSON.stringify(result));
+            }
+            return result;
         }
         return { exists: false, profileComplete: false, data: null };
     } catch (error) {
