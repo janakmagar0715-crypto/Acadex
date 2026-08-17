@@ -12,6 +12,12 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
+    // Helper function to check field immutability during update
+    function isUnchanged(fieldName) {
+      return !(fieldName in resource.data) || 
+        request.resource.data[fieldName] == resource.data[fieldName];
+    }
+
     // 1. Private User Profiles & Bookmarks
     match /users/{userId} {
       allow read: if isOwner(userId);
@@ -22,7 +28,8 @@ service cloud.firestore {
 
       allow update: if
         isOwner(userId) &&
-        request.resource.data.uid == resource.data.uid;
+        request.resource.data.uid == resource.data.uid &&
+        isUnchanged('createdAt');
 
       allow delete: if isOwner(userId);
 
@@ -41,7 +48,10 @@ service cloud.firestore {
 
       allow update: if isSignedIn() &&
         resource.data.uploaderUid == request.auth.uid &&
-        request.resource.data.uploaderUid == resource.data.uploaderUid;
+        request.resource.data.uploaderUid == resource.data.uploaderUid &&
+        isUnchanged('createdAt') &&
+        isUnchanged('downloadsCount') &&
+        isUnchanged('viewsCount');
 
       allow delete: if isSignedIn() && 
         resource.data.uploaderUid == request.auth.uid;
@@ -56,7 +66,9 @@ service cloud.firestore {
 
       allow update: if isSignedIn() &&
         resource.data.uploaderUid == request.auth.uid &&
-        request.resource.data.uploaderUid == resource.data.uploaderUid;
+        request.resource.data.uploaderUid == resource.data.uploaderUid &&
+        isUnchanged('createdAt') &&
+        isUnchanged('downloadsCount');
 
       allow delete: if isSignedIn() && 
         resource.data.uploaderUid == request.auth.uid;
@@ -71,7 +83,8 @@ service cloud.firestore {
 
       allow update: if isSignedIn() &&
         resource.data.sellerUid == request.auth.uid &&
-        request.resource.data.sellerUid == resource.data.sellerUid;
+        request.resource.data.sellerUid == resource.data.sellerUid &&
+        isUnchanged('createdAt');
 
       allow delete: if isSignedIn() && 
         resource.data.sellerUid == request.auth.uid;
