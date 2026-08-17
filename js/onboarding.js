@@ -426,19 +426,8 @@ document.addEventListener("DOMContentLoaded", () => {
                         updatedAt: serverTimestamp()
                     };
 
-                    // Timeout race promise to prevent hanging indefinitely on network issues
-                    const TIMEOUT_MS = 10000;
-                    const timeoutPromise = new Promise((_, reject) => {
-                        setTimeout(() => {
-                            reject(new Error("Network timeout while saving profile. Please check your connection and try again."));
-                        }, TIMEOUT_MS);
-                    });
-
                     // Perform Firestore write
-                    await Promise.race([
-                        setDoc(userDocRef, userProfilePayload),
-                        timeoutPromise
-                    ]);
+                    await setDoc(userDocRef, userProfilePayload);
 
                     console.log("Onboarding complete! Firestore user profile created successfully for:", activeUser.uid);
                     isSaveSuccessful = true;
