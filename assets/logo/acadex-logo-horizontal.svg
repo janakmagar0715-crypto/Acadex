@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 360">
+<rect width="1200" height="360" rx="40" fill="#0D1117"/>
+<g transform="translate(45 35) scale(.56)">
+
+<defs>
+  <linearGradient id="blue" x1="90" y1="430" x2="410" y2="80" gradientUnits="userSpaceOnUse">
+    <stop stop-color="#1D4ED8"/>
+    <stop offset="1" stop-color="#2563EB"/>
+  </linearGradient>
+  <filter id="softGlow" x="-40%" y="-40%" width="180%" height="180%">
+    <feGaussianBlur stdDeviation="5" result="b"/>
+    <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+</defs>
+
+<!-- Geometric A -->
+<path d="M118 392 236 104Q256 55 276 104l118 288h-66l-72-179-72 179z"
+      fill="url(#blue)"/>
+
+<!-- A inner cut -->
+<path d="M198 342l58-91 58 91-29 24-29-41-29 41z"
+      fill="#0D1117"/>
+
+<!-- Open book -->
+<path d="M104 371q70-29 143 14l9 19v20q-75-50-152-22z"
+      fill="#F8FAFC"/>
+<path d="M408 371q-70-29-143 14l-9 19v20q75-50 152-22z"
+      fill="#F8FAFC"/>
+
+<!-- Lime orbit -->
+<path d="M155 238c90-43 199-48 246-2 24 24 2 50-44 64-82 26-182 6-220-30"
+      fill="none" stroke="#84CC16" stroke-width="15"
+      stroke-linecap="round" filter="url(#softGlow)"/>
+
+<!-- Lime spark -->
+<path d="m410 108 8 20 20 8-20 8-8 20-8-20-20-8 20-8z"
+      fill="#84CC16"/>
+
+</g>
+<text x="365" y="195" font-family="Inter,Arial,sans-serif" font-size="125"
+      font-weight="700" letter-spacing="-6" fill="#F8FAFC">
+  acade<tspan fill="#84CC16">x</tspan>
+</text>
+<text x="370" y="250" font-family="Inter,Arial,sans-serif" font-size="19"
+      font-weight="600" letter-spacing="6" fill="#94A3B8">
+  STUDY • SHARE • BUY • SELL • CONNECT
+</text>
+</svg>

@@ -1,0 +1,809 @@
+/* ==========================================================================
+   ACADEX DESIGN SYSTEM & LOGIN PAGE STYLES
+   Official Brand Color System (Direction B) & Reusable Component System
+   ========================================================================== */
+
+/* ---------- Design Tokens ---------- */
+:root {
+  /* Colors */
+  --primary: #2563EB;
+  --primary-dark: #1D4ED8;
+  --primary-light-alpha: rgba(37, 99, 235, 0.12);
+  --primary-glow: rgba(37, 99, 235, 0.25);
+  
+  --lime: #84CC16;
+  --lime-alpha: rgba(132, 204, 22, 0.15);
+  
+  --bg: #F8FAFC;
+  --surface: #FFFFFF;
+  --surface-secondary: #F1F5F9;
+  --surface-hover: #E2E8F0;
+  
+  --text: #0D1117;
+  --text-muted: #64748B;
+  
+  --border: #E2E8F0;
+  --border-hover: #CBD5E1;
+  
+  --error: #EF4444;
+  --error-alpha: rgba(239, 68, 68, 0.1);
+
+  /* Typography */
+  --font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  
+  /* Radii */
+  --radius-card: 20px;
+  --radius-input: 11px;
+  --radius-btn: 11px;
+  --radius-pill: 999px;
+  
+  /* Elevation & Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-card: 0 20px 40px -15px rgba(15, 23, 42, 0.07), 0 0 0 1px var(--border);
+  --shadow-btn: 0 4px 14px 0 rgba(37, 99, 235, 0.22);
+  --shadow-btn-hover: 0 8px 20px 0 rgba(37, 99, 235, 0.32);
+  --shadow-focus: 0 0 0 4px var(--primary-light-alpha);
+  
+  /* Motion */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition: 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  --transition-slow: 350ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* ---------- Dark Mode Overrides ---------- */
+[data-theme="dark"] {
+  --bg: #0D1117;
+  --surface: #151A23;
+  --surface-secondary: #1C2433;
+  --surface-hover: #242E42;
+  
+  --text: #F8FAFC;
+  --text-muted: #94A3B8;
+  
+  --border: #283244;
+  --border-hover: #37455D;
+  
+  --shadow-card: 0 25px 50px -12px rgba(0, 0, 0, 0.45), 0 0 0 1px var(--border);
+  --shadow-btn: 0 4px 14px 0 rgba(37, 99, 235, 0.35);
+  --shadow-btn-hover: 0 8px 24px 0 rgba(37, 99, 235, 0.45);
+}
+
+/* ---------- Base Reset & Global Styles ---------- */
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color-scheme: light dark;
+}
+
+body {
+  min-height: 100vh;
+  font-family: var(--font-family);
+  background-color: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+  overflow-x: hidden;
+  transition: background-color var(--transition-slow), color var(--transition-slow);
+}
+
+/* Accessibility Focus Ring */
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* ---------- Ambient Background Texture ---------- */
+.background-effects {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.grid-pattern {
+  position: absolute;
+  inset: 0;
+  opacity: 0.18;
+  background-image: 
+    linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(circle at 50% 50%, black 30%, transparent 85%);
+  -webkit-mask-image: radial-gradient(circle at 50% 50%, black 30%, transparent 85%);
+}
+
+[data-theme="dark"] .grid-pattern {
+  opacity: 0.12;
+}
+
+.ambient-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(110px);
+  pointer-events: none;
+  animation: floatAmbient 18s ease-in-out infinite alternate;
+}
+
+.orb-primary {
+  width: 450px;
+  height: 450px;
+  background: var(--primary);
+  opacity: 0.07;
+  top: -160px;
+  left: -120px;
+}
+
+.orb-lime {
+  width: 380px;
+  height: 380px;
+  background: var(--lime);
+  opacity: 0.05;
+  bottom: -140px;
+  right: -100px;
+  animation-delay: -9s;
+}
+
+@keyframes floatAmbient {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  100% {
+    transform: translate(30px, -20px) scale(1.06);
+  }
+}
+
+/* ---------- Top Header / Theme Toggle ---------- */
+.theme-toggle {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 50;
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition);
+}
+
+.theme-toggle:hover {
+  transform: translateY(-2px);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.theme-toggle svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform var(--transition);
+}
+
+.theme-toggle:hover svg {
+  transform: rotate(15deg);
+}
+
+.icon-sun { display: none; }
+.icon-moon { display: block; }
+
+[data-theme="dark"] .icon-sun { display: block; }
+[data-theme="dark"] .icon-moon { display: none; }
+
+/* ---------- Main Layout Container ---------- */
+.auth-container {
+  position: relative;
+  z-index: 1;
+  width: min(1200px, 90%);
+  min-height: 100vh;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(380px, 440px);
+  align-items: center;
+  gap: 72px;
+  padding: 60px 0;
+}
+
+/* ---------- Left Side: Brand Introduction ---------- */
+.auth-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.brand-logo-wrapper {
+  margin-bottom: 32px;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-logo {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  filter: drop-shadow(0 10px 20px rgba(37, 99, 235, 0.18));
+  transition: transform var(--transition-slow);
+}
+
+.brand-logo-wrapper:hover .brand-logo {
+  transform: scale(1.04) rotate(-2deg);
+}
+
+.brand-headline {
+  max-width: 580px;
+  font-size: clamp(38px, 4.2vw, 56px);
+  font-weight: 800;
+  line-height: 1.08;
+  letter-spacing: -0.035em;
+  color: var(--text);
+  margin-bottom: 20px;
+}
+
+.highlight-blue {
+  color: var(--primary);
+}
+
+.highlight-lime {
+  color: var(--lime);
+}
+
+.brand-description {
+  max-width: 500px;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.65;
+  color: var(--text-muted);
+  margin-bottom: 36px;
+}
+
+/* Feature Indicators */
+.brand-features {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.feature-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 16px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-muted);
+  font-size: 13.5px;
+  font-weight: 500;
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition);
+  user-select: none;
+}
+
+.feature-pill svg {
+  width: 16px;
+  height: 16px;
+  stroke: var(--primary);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+  flex-shrink: 0;
+  transition: transform var(--transition);
+}
+
+.feature-pill:hover {
+  transform: translateY(-2px);
+  border-color: var(--primary);
+  color: var(--text);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.1);
+}
+
+.feature-pill:hover svg {
+  transform: scale(1.15);
+}
+
+/* ---------- Right Side: Login Card ---------- */
+.auth-section {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 440px;
+  padding: 40px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  animation: fadeInUp 0.6s 0.1s cubic-bezier(0.16, 1, 0.3, 1) both;
+  transition: background-color var(--transition-slow), border-color var(--transition-slow), box-shadow var(--transition-slow);
+}
+
+/* Card Header */
+.auth-header {
+  margin-bottom: 28px;
+}
+
+.eyebrow {
+  display: inline-block;
+  color: var(--lime);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.auth-title {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+
+.auth-subtitle {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+/* ---------- Google Login Button ---------- */
+.btn-google {
+  width: 100%;
+  height: 52px;
+  border-radius: var(--radius-btn);
+  border: 1px solid var(--border);
+  background: var(--surface-secondary);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  transition: var(--transition);
+}
+
+.btn-google svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.btn-google:hover {
+  transform: translateY(-2px);
+  border-color: var(--border-hover);
+  background: var(--surface-hover);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-google:active {
+  transform: translateY(0);
+}
+
+/* ---------- Divider ---------- */
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 24px 0;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.divider::before,
+.divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* ---------- Form Controls ---------- */
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.form-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+.form-label-row .form-label {
+  margin-bottom: 0;
+}
+
+.forgot-link {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--primary);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+.forgot-link:hover {
+  color: var(--primary-dark);
+  text-decoration: underline;
+}
+
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-field {
+  width: 100%;
+  height: 52px;
+  padding: 0 16px;
+  border-radius: var(--radius-input);
+  border: 1px solid var(--border);
+  background: var(--surface-secondary);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 14.5px;
+  outline: none;
+  transition: var(--transition);
+}
+
+.input-field::placeholder {
+  color: var(--text-muted);
+  opacity: 0.7;
+}
+
+.input-field:hover {
+  border-color: var(--border-hover);
+}
+
+.input-field:focus {
+  border-color: var(--primary);
+  background: var(--surface);
+  box-shadow: var(--shadow-focus);
+}
+
+/* Password Toggle Icon Button */
+.input-wrapper .input-field {
+  padding-right: 48px;
+}
+
+.password-toggle-btn {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color var(--transition-fast), background-color var(--transition-fast);
+}
+
+.password-toggle-btn:hover {
+  color: var(--text);
+  background-color: var(--surface-hover);
+}
+
+.password-toggle-btn svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.icon-eye-off { display: none; }
+.icon-eye { display: block; }
+
+.password-toggle-btn.showing .icon-eye { display: none; }
+.password-toggle-btn.showing .icon-eye-off { display: block; }
+
+/* ---------- Primary Sign-In Button ---------- */
+.btn-primary {
+  width: 100%;
+  height: 52px;
+  margin-top: 8px;
+  border-radius: var(--radius-btn);
+  border: none;
+  background: var(--primary);
+  color: #FFFFFF;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  box-shadow: var(--shadow-btn);
+  transition: var(--transition);
+}
+
+.btn-primary svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform var(--transition);
+}
+
+.btn-primary:hover {
+  background: var(--primary-dark);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-btn-hover);
+}
+
+.btn-primary:hover svg {
+  transform: translateX(4px);
+}
+
+.btn-primary:active {
+  transform: translateY(0) scale(0.985);
+  box-shadow: var(--shadow-btn);
+}
+
+/* ---------- Register Footer Text ---------- */
+.register-text {
+  text-align: center;
+  margin-top: 26px;
+  font-size: 13.5px;
+  color: var(--text-muted);
+}
+
+.register-link {
+  color: var(--primary);
+  font-weight: 600;
+  text-decoration: none;
+  margin-left: 4px;
+  transition: color var(--transition-fast);
+}
+
+.register-link:hover {
+  color: var(--primary-dark);
+  text-decoration: underline;
+}
+
+/* ---------- Toast Notification Container ---------- */
+.toast-container {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.toast {
+  pointer-events: auto;
+  min-width: 280px;
+  max-width: 420px;
+  padding: 12px 20px;
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  font-size: 13.5px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: toastIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.toast.toast-exit {
+  animation: toastOut 0.25s cubic-bezier(0.7, 0, 0.84, 0) forwards;
+}
+
+.toast-icon {
+  width: 18px;
+  height: 18px;
+  stroke: var(--primary);
+  stroke-width: 2.2;
+  fill: none;
+  flex-shrink: 0;
+}
+
+.toast-icon.toast-lime {
+  stroke: var(--lime);
+}
+
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes toastOut {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(10px) scale(0.95);
+  }
+}
+
+/* ---------- Entrance Keyframe Animations ---------- */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ---------- Responsive Breakpoints ---------- */
+
+/* Laptop / Medium Desktop (<= 1024px) */
+@media (max-width: 1024px) {
+  .auth-container {
+    gap: 48px;
+    grid-template-columns: 1fr minmax(360px, 420px);
+  }
+  
+  .brand-headline {
+    font-size: 42px;
+  }
+}
+
+/* Tablet (<= 880px) */
+@media (max-width: 880px) {
+  .auth-container {
+    grid-template-columns: 1fr;
+    max-width: 480px;
+    gap: 40px;
+    padding: 60px 0 40px;
+  }
+
+  .auth-brand {
+    align-items: center;
+    text-align: center;
+  }
+
+  .brand-headline {
+    font-size: 38px;
+    max-width: 100%;
+  }
+
+  .brand-description {
+    max-width: 100%;
+  }
+
+  .brand-features {
+    justify-content: center;
+  }
+
+  .auth-section {
+    justify-content: center;
+  }
+}
+
+/* Mobile Devices (<= 520px) */
+@media (max-width: 520px) {
+  .auth-container {
+    width: 92%;
+    padding: 50px 0 30px;
+    gap: 32px;
+  }
+
+  .theme-toggle {
+    top: 16px;
+    right: 16px;
+    width: 40px;
+    height: 40px;
+  }
+
+  .brand-logo {
+    width: 68px;
+    height: 68px;
+  }
+
+  .brand-headline {
+    font-size: 30px;
+    letter-spacing: -0.02em;
+  }
+
+  .brand-description {
+    font-size: 14.5px;
+    margin-bottom: 24px;
+  }
+
+  .feature-pill {
+    padding: 7px 13px;
+    font-size: 12.5px;
+  }
+
+  .auth-card {
+    padding: 28px 20px;
+    border-radius: 16px;
+  }
+
+  .auth-title {
+    font-size: 22px;
+  }
+
+  .btn-google, .input-field, .btn-primary {
+    height: 48px;
+  }
+}
+
+/* ---------- Accessibility: Prefers Reduced Motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  
+  .ambient-orb {
+    animation: none !important;
+  }
+  
+  .brand-logo-wrapper:hover .brand-logo,
+  .btn-google:hover,
+  .btn-primary:hover,
+  .feature-pill:hover,
+  .theme-toggle:hover {
+    transform: none !important;
+  }
+}
