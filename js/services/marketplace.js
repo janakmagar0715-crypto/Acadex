@@ -18,10 +18,50 @@ import {
     where,
     orderBy,
     limit,
-    serverTimestamp
+    serverTimestamp,
+    onSnapshot
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
 const MARKETPLACE_COLLECTION = "marketplace_items";
+
+/**
+ * Real-time subscription listener for marketplace_items collection.
+ * @param {Object} options 
+ * @param {Function} callback 
+ * @returns {Function} Unsubscribe function
+ */
+export function subscribeMarketplaceItems({ category, status = "available", limitCount = 30 } = {}, callback) {
+    try {
+        const colRef = collection(db, MARKETPLACE_COLLECTION);
+        const queryConstraints = [where("status", "==", status)];
+
+        if (category && category !== "all") {
+            queryConstraints.push(where("category", "==", category));
+        }
+
+        queryConstraints.push(orderBy("createdAt", "desc"));
+        queryConstraints.push(limit(limitCount));
+
+        const q = query(colRef, ...queryConstraints);
+
+        return onSnapshot(q, (snapshot) => {
+            const items = [];
+            snapshot.forEach(docSnap => {
+                items.push({
+                    id: docSnap.id,
+                    ...docSnap.data()
+                });
+            });
+            callback(items);
+        }, (error) => {
+            console.error("Real-time marketplace subscription error:", error);
+            callback([], error);
+        });
+    } catch (error) {
+        console.error("Error setting up real-time marketplace subscription:", error);
+        throw error;
+    }
+}
 
 /**
  * Fetches available marketplace listings matching optional category filters.

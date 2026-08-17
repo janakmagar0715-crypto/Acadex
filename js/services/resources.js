@@ -18,10 +18,53 @@ import {
     where,
     orderBy,
     limit,
-    serverTimestamp
+    serverTimestamp,
+    onSnapshot
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
 const RESOURCES_COLLECTION = "resources";
+
+/**
+ * Real-time subscription listener for resources collection.
+ * @param {Object} options 
+ * @param {Function} callback 
+ * @returns {Function} Unsubscribe function
+ */
+export function subscribeResources({ category, department, limitCount = 30 } = {}, callback) {
+    try {
+        const colRef = collection(db, RESOURCES_COLLECTION);
+        const queryConstraints = [where("status", "==", "active")];
+
+        if (category && category !== "all") {
+            queryConstraints.push(where("category", "==", category));
+        }
+        if (department && department !== "all") {
+            queryConstraints.push(where("department", "==", department));
+        }
+
+        queryConstraints.push(orderBy("createdAt", "desc"));
+        queryConstraints.push(limit(limitCount));
+
+        const q = query(colRef, ...queryConstraints);
+
+        return onSnapshot(q, (snapshot) => {
+            const resources = [];
+            snapshot.forEach(docSnap => {
+                resources.push({
+                    id: docSnap.id,
+                    ...docSnap.data()
+                });
+            });
+            callback(resources);
+        }, (error) => {
+            console.error("Real-time resources subscription error:", error);
+            callback([], error);
+        });
+    } catch (error) {
+        console.error("Error setting up real-time resources subscription:", error);
+        throw error;
+    }
+}
 
 /**
  * Fetches shared academic resources matching optional category/department filters.

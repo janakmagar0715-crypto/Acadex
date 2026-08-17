@@ -6,7 +6,7 @@
 
 import { auth, checkUserProfile } from "./firebase-config.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
-import { fetchResources, createResource, deleteResource, fetchResourceById } from "./services/resources.js";
+import { fetchResources, createResource, deleteResource, fetchResourceById, subscribeResources } from "./services/resources.js";
 import { uploadResourceFile } from "./services/storage.js";
 import { fetchUserBookmarks, addBookmark, removeBookmark } from "./services/bookmarks.js";
 import { escapeHtml } from "./utils.js";
@@ -210,10 +210,17 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     /* ----------------------------------------------------------------------
-       5. RESOURCE FEED FETCHING & RENDERING
+       5. RESOURCE FEED FETCHING & RENDERING (REAL-TIME FIRESTORE LISTENER)
        ---------------------------------------------------------------------- */
-    async function loadResources() {
+    let resourcesUnsubscribe = null;
+
+    function loadResources() {
         if (!resourcesGrid) return;
+
+        if (resourcesUnsubscribe) {
+            resourcesUnsubscribe();
+            resourcesUnsubscribe = null;
+        }
 
         // Show Shimmer Skeleton
         resourcesGrid.style.display = "grid";
@@ -231,33 +238,42 @@ document.addEventListener("DOMContentLoaded", () => {
         const searchQuery = searchInput ? searchInput.value.trim().toLowerCase() : "";
 
         try {
-            const fetched = await fetchResources({
+            resourcesUnsubscribe = subscribeResources({
                 category: categoryVal,
                 department: deptVal,
                 limitCount: 30
-            });
-
-            // Client-side filter for semester and search query
-            currentResourcesList = fetched.filter(item => {
-                if (semVal !== "all" && item.semester !== semVal) return false;
-                if (searchQuery) {
-                    const titleMatch = (item.title || "").toLowerCase().includes(searchQuery);
-                    const subjectMatch = (item.subject || "").toLowerCase().includes(searchQuery);
-                    return titleMatch || subjectMatch;
+            }, (fetched, error) => {
+                if (error) {
+                    console.error("Real-time resources error:", error);
+                    resourcesGrid.style.display = "none";
+                    if (errorState) errorState.style.display = "flex";
+                    return;
                 }
-                return true;
+
+                // Client-side filter for semester and search query
+                currentResourcesList = fetched.filter(item => {
+                    if (semVal !== "all" && item.semester !== semVal) return false;
+                    if (searchQuery) {
+                        const titleMatch = (item.title || "").toLowerCase().includes(searchQuery);
+                        const subjectMatch = (item.subject || "").toLowerCase().includes(searchQuery);
+                        return titleMatch || subjectMatch;
+                    }
+                    return true;
+                });
+
+                if (currentResourcesList.length === 0) {
+                    resourcesGrid.style.display = "none";
+                    if (emptyState) emptyState.style.display = "flex";
+                    return;
+                }
+
+                if (emptyState) emptyState.style.display = "none";
+                if (errorState) errorState.style.display = "none";
+                renderResourcesGrid(currentResourcesList);
             });
-
-            if (currentResourcesList.length === 0) {
-                resourcesGrid.style.display = "none";
-                if (emptyState) emptyState.style.display = "flex";
-                return;
-            }
-
-            renderResourcesGrid(currentResourcesList);
 
         } catch (error) {
-            console.error("Error loading resources feed:", error);
+            console.error("Error establishing real-time resources feed:", error);
             resourcesGrid.style.display = "none";
             if (errorState) errorState.style.display = "flex";
         }

@@ -18,10 +18,53 @@ import {
     where,
     orderBy,
     limit,
-    serverTimestamp
+    serverTimestamp,
+    onSnapshot
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
 const PAPERS_COLLECTION = "past_papers";
+
+/**
+ * Real-time subscription listener for past_papers collection.
+ * @param {Object} options 
+ * @param {Function} callback 
+ * @returns {Function} Unsubscribe function
+ */
+export function subscribePastPapers({ department, examType, limitCount = 30 } = {}, callback) {
+    try {
+        const colRef = collection(db, PAPERS_COLLECTION);
+        const queryConstraints = [];
+
+        if (department && department !== "all") {
+            queryConstraints.push(where("department", "==", department));
+        }
+        if (examType && examType !== "all") {
+            queryConstraints.push(where("examType", "==", examType));
+        }
+
+        queryConstraints.push(orderBy("createdAt", "desc"));
+        queryConstraints.push(limit(limitCount));
+
+        const q = query(colRef, ...queryConstraints);
+
+        return onSnapshot(q, (snapshot) => {
+            const papers = [];
+            snapshot.forEach(docSnap => {
+                papers.push({
+                    id: docSnap.id,
+                    ...docSnap.data()
+                });
+            });
+            callback(papers);
+        }, (error) => {
+            console.error("Real-time past papers subscription error:", error);
+            callback([], error);
+        });
+    } catch (error) {
+        console.error("Error setting up real-time past papers subscription:", error);
+        throw error;
+    }
+}
 
 /**
  * Fetches past examination papers with optional subject/department/examType filters.
