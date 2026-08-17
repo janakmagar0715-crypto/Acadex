@@ -1,0 +1,80 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // 1. Private User Profiles & Bookmarks
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+
+      allow create: if
+        isOwner(userId) &&
+        request.resource.data.uid == request.auth.uid;
+
+      allow update: if
+        isOwner(userId) &&
+        request.resource.data.uid == resource.data.uid;
+
+      allow delete: if isOwner(userId);
+
+      // Bookmarks Subcollection (Private to Owner)
+      match /bookmarks/{bookmarkId} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+
+    // 2. Shared Academic Resources (Notes, Assignments, Projects)
+    match /resources/{resourceId} {
+      allow read: if isSignedIn();
+      
+      allow create: if isSignedIn() && 
+        request.resource.data.uploaderUid == request.auth.uid;
+
+      allow update: if isSignedIn() &&
+        resource.data.uploaderUid == request.auth.uid &&
+        request.resource.data.uploaderUid == resource.data.uploaderUid;
+
+      allow delete: if isSignedIn() && 
+        resource.data.uploaderUid == request.auth.uid;
+    }
+
+    // 3. Past Examination Papers
+    match /past_papers/{paperId} {
+      allow read: if isSignedIn();
+      
+      allow create: if isSignedIn() && 
+        request.resource.data.uploaderUid == request.auth.uid;
+
+      allow update: if isSignedIn() &&
+        resource.data.uploaderUid == request.auth.uid &&
+        request.resource.data.uploaderUid == resource.data.uploaderUid;
+
+      allow delete: if isSignedIn() && 
+        resource.data.uploaderUid == request.auth.uid;
+    }
+
+    // 4. Student Marketplace Listings
+    match /marketplace_items/{itemId} {
+      allow read: if isSignedIn();
+
+      allow create: if isSignedIn() && 
+        request.resource.data.sellerUid == request.auth.uid;
+
+      allow update: if isSignedIn() &&
+        resource.data.sellerUid == request.auth.uid &&
+        request.resource.data.sellerUid == resource.data.sellerUid;
+
+      allow delete: if isSignedIn() && 
+        resource.data.sellerUid == request.auth.uid;
+    }
+  }
+}
