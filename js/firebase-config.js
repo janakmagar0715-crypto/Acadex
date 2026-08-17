@@ -39,7 +39,7 @@ export async function checkUserProfile(uid) {
         const docSnap = await getDoc(userDocRef);
         if (docSnap.exists()) {
             const data = docSnap.data();
-            const profileComplete = data && data.profileComplete === true;
+            const profileComplete = data && (data.profileComplete === true || data.profileComplete === "true");
             return { exists: true, profileComplete, data };
         }
         return { exists: false, profileComplete: false, data: null };
