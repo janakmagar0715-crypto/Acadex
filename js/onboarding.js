@@ -189,8 +189,14 @@ document.addEventListener("DOMContentLoaded", () => {
             if (currentUser.photoURL) {
                 previewAvatar.innerHTML = `<img src="${currentUser.photoURL}" alt="Avatar" style="width:36px;height:36px;border-radius:50%;object-fit:cover;">`;
             } else {
-                const initials = `${firstVal[0] || ''}${lastVal[0] || ''}`.toUpperCase() || "ST";
-                previewAvatar.textContent = initials;
+                let initials = `${firstVal[0] || ''}${lastVal[0] || ''}`.toUpperCase();
+                if (!initials && currentUser.displayName) {
+                    initials = currentUser.displayName.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase();
+                }
+                if (!initials && currentUser.email) {
+                    initials = currentUser.email.substring(0, 2).toUpperCase();
+                }
+                previewAvatar.textContent = initials || "ST";
             }
         }
     }
@@ -219,14 +225,23 @@ document.addEventListener("DOMContentLoaded", () => {
             console.warn("Onboarding initial profile check warning:", err);
         }
 
-        // Pre-fill Step 1 details from Google User object
-        if (userEmailDisplay) userEmailDisplay.textContent = user.email || "";
+        // Pre-fill Step 1 details from Google / Auth User object
+        if (userEmailDisplay) {
+            userEmailDisplay.textContent = user.email || "student@acadex.edu";
+        }
 
-        if (user.photoURL) {
-            if (userAvatar) userAvatar.innerHTML = `<img src="${user.photoURL}" alt="${user.displayName || 'User'}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
-        } else if (user.displayName) {
-            const initials = user.displayName.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase();
-            if (userAvatar) userAvatar.textContent = initials;
+        if (userAvatar) {
+            if (user.photoURL) {
+                userAvatar.innerHTML = `<img src="${user.photoURL}" alt="${user.displayName || 'User'}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+            } else {
+                let initials = "ST";
+                if (user.displayName) {
+                    initials = user.displayName.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase();
+                } else if (user.email) {
+                    initials = user.email.substring(0, 2).toUpperCase();
+                }
+                userAvatar.textContent = initials;
+            }
         }
 
         // Intelligently split displayName into First and Last Name
