@@ -8,6 +8,7 @@ import {
     db, 
     checkUserProfile, 
     doc, 
+    getDoc,
     setDoc, 
     serverTimestamp 
 } from "./firebase-config.js";
