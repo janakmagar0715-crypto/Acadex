@@ -4,9 +4,9 @@
    ========================================================================== */
 
 import { auth, checkUserProfile } from "./firebase-config.js";
-import { 
-    signOut, 
-    onAuthStateChanged 
+import {
+    signOut,
+    onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
 import { fetchResources } from "./services/resources.js";
 import { fetchUserBookmarks, addBookmark, removeBookmark } from "./services/bookmarks.js";
@@ -28,6 +28,7 @@ const continueStudyingData = [
 ];
 
 document.addEventListener("DOMContentLoaded", () => {
+
 
     /* ----------------------------------------------------------------------
        2. THEME CONTROLLER
@@ -76,7 +77,7 @@ document.addEventListener("DOMContentLoaded", () => {
         toastContainer.innerHTML = "";
         const toast = document.createElement("div");
         toast.className = "toast";
-        
+
         const iconSvg = isSuccess
             ? `<svg class="toast-icon toast-lime" viewBox="0 0 24 24" aria-hidden="true">
                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
@@ -167,40 +168,40 @@ document.addEventListener("DOMContentLoaded", () => {
         if (statRes) statRes.textContent = overviewStatsData.resources;
         if (statPap) statPap.textContent = overviewStatsData.pastPapers;
         if (statSav) statSav.textContent = overviewStatsData.savedItems;
-    /**
-     * Renders overview stats, recent academic resources, and study progress.
-     */
-    async function renderDashboardContent(user) {
-        // Render Stat Cards
-        const statRes = document.getElementById("statResources");
-        const statPap = document.getElementById("statPapers");
-        const statSav = document.getElementById("statSaved");
-        const statUpl = document.getElementById("statUploads");
+        /**
+         * Renders overview stats, recent academic resources, and study progress.
+         */
+        async function renderDashboardContent(user) {
+            // Render Stat Cards
+            const statRes = document.getElementById("statResources");
+            const statPap = document.getElementById("statPapers");
+            const statSav = document.getElementById("statSaved");
+            const statUpl = document.getElementById("statUploads");
 
-        if (statRes) statRes.textContent = overviewStatsData.resources;
-        if (statPap) statPap.textContent = overviewStatsData.pastPapers;
-        if (statSav) statSav.textContent = overviewStatsData.savedItems;
-        if (statUpl) statUpl.textContent = overviewStatsData.uploads;
+            if (statRes) statRes.textContent = overviewStatsData.resources;
+            if (statPap) statPap.textContent = overviewStatsData.pastPapers;
+            if (statSav) statSav.textContent = overviewStatsData.savedItems;
+            if (statUpl) statUpl.textContent = overviewStatsData.uploads;
 
-        // Render Recent Resources from Firestore
-        const resourcesList = document.getElementById("resourcesList");
-        if (resourcesList) {
-            try {
-                const liveResources = await fetchResources({ limitCount: 4 });
-                
-                let userBookmarks = [];
-                if (user) {
-                    try { userBookmarks = await fetchUserBookmarks(user.uid); } catch (e) {}
-                }
-                const bookmarkSet = new Set(userBookmarks.map(b => b.targetId));
+            // Render Recent Resources from Firestore
+            const resourcesList = document.getElementById("resourcesList");
+            if (resourcesList) {
+                try {
+                    const liveResources = await fetchResources({ limitCount: 4 });
 
-                if (liveResources.length > 0) {
-                    resourcesList.innerHTML = liveResources.map(item => {
-                        const isSaved = bookmarkSet.has(item.id);
-                        let badgeClass = "";
-                        if (item.category === "assignment") badgeClass = "badge-paper";
+                    let userBookmarks = [];
+                    if (user) {
+                        try { userBookmarks = await fetchUserBookmarks(user.uid); } catch (e) { }
+                    }
+                    const bookmarkSet = new Set(userBookmarks.map(b => b.targetId));
 
-                        return `
+                    if (liveResources.length > 0) {
+                        resourcesList.innerHTML = liveResources.map(item => {
+                            const isSaved = bookmarkSet.has(item.id);
+                            let badgeClass = "";
+                            if (item.category === "assignment") badgeClass = "badge-paper";
+
+                            return `
                             <div class="resource-card" data-id="${item.id}">
                                 <div class="resource-left">
                                     <span class="resource-type-badge ${badgeClass}">${(item.category || "Notes").toUpperCase()}</span>
@@ -217,64 +218,64 @@ document.addEventListener("DOMContentLoaded", () => {
                                 </div>
                             </div>
                         `;
-                    }).join("");
+                        }).join("");
 
-                    // Attach real bookmark action handlers
-                    resourcesList.querySelectorAll(".bookmark-btn").forEach(btn => {
-                        btn.addEventListener("click", async (e) => {
-                            e.stopPropagation();
-                            if (!user) return;
-                            const resId = btn.getAttribute("data-id");
-                            const isSaved = bookmarkSet.has(resId);
-                            const item = liveResources.find(r => r.id === resId);
-                            
-                            try {
-                                if (isSaved) {
-                                    await removeBookmark("resource", resId);
-                                    bookmarkSet.delete(resId);
-                                    btn.classList.remove("bookmarked");
-                                    showToast("Resource removed from bookmarks.");
-                                } else {
-                                    await addBookmark({
-                                        targetId: resId,
-                                        targetType: "resource",
-                                        title: item ? item.title : "Resource",
-                                        subject: item ? item.subject : "",
-                                        category: item ? item.category : "notes"
-                                    });
-                                    bookmarkSet.add(resId);
-                                    btn.classList.add("bookmarked");
-                                    showToast("Resource saved to your bookmarks!", true);
+                        // Attach real bookmark action handlers
+                        resourcesList.querySelectorAll(".bookmark-btn").forEach(btn => {
+                            btn.addEventListener("click", async (e) => {
+                                e.stopPropagation();
+                                if (!user) return;
+                                const resId = btn.getAttribute("data-id");
+                                const isSaved = bookmarkSet.has(resId);
+                                const item = liveResources.find(r => r.id === resId);
+
+                                try {
+                                    if (isSaved) {
+                                        await removeBookmark("resource", resId);
+                                        bookmarkSet.delete(resId);
+                                        btn.classList.remove("bookmarked");
+                                        showToast("Resource removed from bookmarks.");
+                                    } else {
+                                        await addBookmark({
+                                            targetId: resId,
+                                            targetType: "resource",
+                                            title: item ? item.title : "Resource",
+                                            subject: item ? item.subject : "",
+                                            category: item ? item.category : "notes"
+                                        });
+                                        bookmarkSet.add(resId);
+                                        btn.classList.add("bookmarked");
+                                        showToast("Resource saved to your bookmarks!", true);
+                                    }
+                                } catch (err) {
+                                    console.error("Dashboard bookmark toggle error:", err);
+                                    showToast("Could not update bookmark.", false);
                                 }
-                            } catch (err) {
-                                console.error("Dashboard bookmark toggle error:", err);
-                                showToast("Could not update bookmark.", false);
-                            }
+                            });
                         });
-                    });
 
-                } else {
-                    resourcesList.innerHTML = `
+                    } else {
+                        resourcesList.innerHTML = `
                         <div class="resource-card" style="justify-content: center; text-align: center; padding: 24px;">
                             <span class="resource-meta">No academic resources uploaded yet. <a href="resources.html" style="color: var(--primary); font-weight: 700; text-decoration: none;">Upload the first resource &rarr;</a></span>
                         </div>
                     `;
-                }
+                    }
 
-            } catch (error) {
-                console.error("Dashboard Firestore Resource Fetch Error:", error);
-                resourcesList.innerHTML = `
+                } catch (error) {
+                    console.error("Dashboard Firestore Resource Fetch Error:", error);
+                    resourcesList.innerHTML = `
                     <div class="resource-card" style="justify-content: center; text-align: center; padding: 20px;">
                         <span class="resource-meta">Unable to load recent resources feed.</span>
                     </div>
                 `;
+                }
             }
-        }
 
-        // Render Continue Studying Progress Cards
-        const progressList = document.getElementById("progressList");
-        if (progressList) {
-            progressList.innerHTML = continueStudyingData.map(course => `
+            // Render Continue Studying Progress Cards
+            const progressList = document.getElementById("progressList");
+            if (progressList) {
+                progressList.innerHTML = continueStudyingData.map(course => `
                 <div class="progress-item">
                     <div class="progress-item-header">
                         <span class="progress-subject">${course.subject}</span>
@@ -285,136 +286,134 @@ document.addEventListener("DOMContentLoaded", () => {
                     </div>
                 </div>
             `).join("");
-        }
-    }
-
-    /* ----------------------------------------------------------------------
-       5. FIREBASE AUTH STATE OBSERVER & PROFILE CHECK
-       ---------------------------------------------------------------------- */
-    try {
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                console.log("Dashboard: User authenticated as:", user.email);
-                
-                // Verify user profile exists and is complete in Firestore
-                const profileResult = await checkUserProfile(user.uid);
-                if (!profileResult.profileComplete) {
-                    console.log("Dashboard: User profile incomplete or missing. Redirecting to onboarding...");
-                    window.location.href = "onboarding.html";
-                    return;
-                }
-
-                // Render User Profile & Dashboard using Auth and Firestore data
-                const profileData = profileResult.data || {};
-                renderUser(user, profileData);
-                await renderDashboardContent(user);
-            } else {
-                console.log("Dashboard: No active user, redirecting to login...");
-                window.location.href = "login.html";
             }
-        });
-    } catch (err) {
-        console.error("Dashboard auth state observer error:", err);
-    }
+        }
 
-    /* ----------------------------------------------------------------------
-       6. REAL FIREBASE LOGOUT HANDLER
-       ---------------------------------------------------------------------- */
-    const logoutBtn = document.getElementById("logoutBtn");
-
-    async function handleLogout() {
+        /* ----------------------------------------------------------------------
+           5. FIREBASE AUTH STATE OBSERVER & PROFILE CHECK
+           ---------------------------------------------------------------------- */
         try {
-            showToast("Signing out...");
-            await signOut(auth);
-            console.log("Firebase user signed out successfully.");
-            setTimeout(() => {
-                window.location.href = "login.html";
-            }, 600);
-        } catch (error) {
-            console.error("Logout error:", error);
-            showToast("Failed to sign out. Please try again.", false);
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    console.log("Dashboard: User authenticated as:", user.email);
+
+                    // Verify user profile exists and is complete in Firestore
+                    const profileResult = await checkUserProfile(user.uid);
+                    if (!profileResult.profileComplete) {
+                        console.log("Dashboard: User profile incomplete or missing. Redirecting to onboarding...");
+                        window.location.href = "onboarding.html";
+                        return;
+                    }
+
+                    // Render User Profile & Dashboard using Auth and Firestore data
+                    const profileData = profileResult.data || {};
+                    renderUser(user, profileData);
+                    await renderDashboardContent(user);
+                } else {
+                    console.log("Dashboard: No active user, redirecting to login...");
+                    window.location.href = "login.html";
+                }
+            });
+        } catch (err) {
+            console.error("Dashboard auth state observer error:", err);
         }
-    }
 
-    if (logoutBtn) {
-        logoutBtn.addEventListener("click", (e) => {
-            e.preventDefault();
-            handleLogout();
-        });
-    }
+        /* ----------------------------------------------------------------------
+           6. REAL FIREBASE LOGOUT HANDLER
+           ---------------------------------------------------------------------- */
+        const logoutBtn = document.getElementById("logoutBtn");
 
-    /* ----------------------------------------------------------------------
-       7. UI NAVIGATION & DROPDOWN HANDLERS
-       ---------------------------------------------------------------------- */
-    const profileTrigger = document.getElementById("profileTrigger");
-    const userDropdown = document.getElementById("userDropdown");
-    const mobileMenuBtn = document.getElementById("mobileMenuBtn");
-    const mobileDrawer = document.getElementById("mobileDrawer");
-
-    // Profile Dropdown Toggle
-    if (profileTrigger && userDropdown) {
-        profileTrigger.addEventListener("click", (e) => {
-            e.stopPropagation();
-            const isOpen = userDropdown.classList.contains("show");
-            
-            userDropdown.classList.toggle("show", !isOpen);
-            profileTrigger.classList.toggle("active", !isOpen);
-            profileTrigger.setAttribute("aria-expanded", !isOpen);
-        });
-
-        // Close dropdown when clicking outside
-        document.addEventListener("click", (e) => {
-            if (!userDropdown.contains(e.target) && !profileTrigger.contains(e.target)) {
-                userDropdown.classList.remove("show");
-                profileTrigger.classList.remove("active");
-                profileTrigger.setAttribute("aria-expanded", "false");
+        async function handleLogout() {
+            try {
+                showToast("Signing out...");
+                await signOut(auth);
+                console.log("Firebase user signed out successfully.");
+                setTimeout(() => {
+                    window.location.href = "login.html";
+                }, 600);
+            } catch (error) {
+                console.error("Logout error:", error);
+                showToast("Failed to sign out. Please try again.", false);
             }
-        });
+        }
 
-        // Close dropdown on Escape key
-        document.addEventListener("keydown", (e) => {
-            if (e.key === "Escape") {
-                userDropdown.classList.remove("show");
-                profileTrigger.classList.remove("active");
-                profileTrigger.setAttribute("aria-expanded", "false");
-            }
-        });
-    }
-
-    // Mobile Drawer Toggle
-    if (mobileMenuBtn && mobileDrawer) {
-        mobileMenuBtn.addEventListener("click", () => {
-            const isOpen = mobileDrawer.classList.contains("show");
-            mobileDrawer.classList.toggle("show", !isOpen);
-            mobileDrawer.setAttribute("aria-hidden", isOpen);
-        });
-    }
-
-    // Quick Action Card Demo Toast Handlers
-    const quickActions = [
-        { id: "actionUpload", name: "Resource Uploader" },
-        { id: "actionNotes", name: "Notes Browser" },
-        { id: "actionPapers", name: "Past Papers Repository" },
-        { id: "actionMarketplace", name: "Student Marketplace" }
-    ];
-
-    quickActions.forEach(action => {
-        const cardEl = document.getElementById(action.id);
-        if (cardEl) {
-            cardEl.addEventListener("click", (e) => {
+        if (logoutBtn) {
+            logoutBtn.addEventListener("click", (e) => {
                 e.preventDefault();
-                showToast(`Opening ${action.name}... (UI Demonstration)`);
+                handleLogout();
             });
         }
+
+        /* ----------------------------------------------------------------------
+           7. UI NAVIGATION & DROPDOWN HANDLERS
+           ---------------------------------------------------------------------- */
+        const profileTrigger = document.getElementById("profileTrigger");
+        const userDropdown = document.getElementById("userDropdown");
+        const mobileMenuBtn = document.getElementById("mobileMenuBtn");
+        const mobileDrawer = document.getElementById("mobileDrawer");
+
+        // Profile Dropdown Toggle
+        if (profileTrigger && userDropdown) {
+            profileTrigger.addEventListener("click", (e) => {
+                e.stopPropagation();
+                const isOpen = userDropdown.classList.contains("show");
+
+                userDropdown.classList.toggle("show", !isOpen);
+                profileTrigger.classList.toggle("active", !isOpen);
+                profileTrigger.setAttribute("aria-expanded", !isOpen);
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener("click", (e) => {
+                if (!userDropdown.contains(e.target) && !profileTrigger.contains(e.target)) {
+                    userDropdown.classList.remove("show");
+                    profileTrigger.classList.remove("active");
+                    profileTrigger.setAttribute("aria-expanded", "false");
+                }
+            });
+
+            // Close dropdown on Escape key
+            document.addEventListener("keydown", (e) => {
+                if (e.key === "Escape") {
+                    userDropdown.classList.remove("show");
+                    profileTrigger.classList.remove("active");
+                    profileTrigger.setAttribute("aria-expanded", "false");
+                }
+            });
+        }
+
+        // Mobile Drawer Toggle
+        if (mobileMenuBtn && mobileDrawer) {
+            mobileMenuBtn.addEventListener("click", () => {
+                const isOpen = mobileDrawer.classList.contains("show");
+                mobileDrawer.classList.toggle("show", !isOpen);
+                mobileDrawer.setAttribute("aria-hidden", isOpen);
+            });
+        }
+
+        // Quick Action Card Demo Toast Handlers
+        const demoQuickActions = [
+            { id: "actionPapers", name: "Past Papers Repository" },
+            { id: "actionMarketplace", name: "Student Marketplace" }
+        ];
+
+        demoQuickActions.forEach(action => {
+            const cardEl = document.getElementById(action.id);
+            if (cardEl) {
+                cardEl.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    showToast(`Opening ${action.name}... (UI Demonstration)`);
+                });
+            }
+        });
+
+        const menuProfileBtn = document.getElementById("menuProfileBtn");
+        const menuSettingsBtn = document.getElementById("menuSettingsBtn");
+
+        if (menuProfileBtn) {
+            menuProfileBtn.addEventListener("click", () => showToast("Profile settings coming soon!"));
+        }
+        if (menuSettingsBtn) {
+            menuSettingsBtn.addEventListener("click", () => showToast("Account settings coming soon!"));
+        }
     });
-
-    const menuProfileBtn = document.getElementById("menuProfileBtn");
-    const menuSettingsBtn = document.getElementById("menuSettingsBtn");
-
-    if (menuProfileBtn) {
-        menuProfileBtn.addEventListener("click", () => showToast("Profile settings coming soon!"));
-    }
-    if (menuSettingsBtn) {
-        menuSettingsBtn.addEventListener("click", () => showToast("Account settings coming soon!"));
-    }
-});
