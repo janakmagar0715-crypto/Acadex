@@ -113,12 +113,57 @@ document.addEventListener("DOMContentLoaded", () => {
     const userAvatar = document.getElementById("userAvatar");
     const userEmailDisplay = document.getElementById("userEmailDisplay");
 
-    // Toggle Interest Chips
-    if (interestsGrid) {
-        interestsGrid.querySelectorAll(".interest-chip").forEach(chip => {
-            chip.addEventListener("click", () => {
-                chip.classList.toggle("selected");
-            });
+    // Dynamic Year-to-Semester Options Mapping
+    if (yearSelect && semesterSelect) {
+        const semesterOptionsMap = {
+            "First Year": [
+                { value: "Semester 1", text: "Semester 1" },
+                { value: "Semester 2", text: "Semester 2" }
+            ],
+            "Second Year": [
+                { value: "Semester 3", text: "Semester 3" },
+                { value: "Semester 4", text: "Semester 4" }
+            ],
+            "Third Year": [
+                { value: "Semester 5", text: "Semester 5" },
+                { value: "Semester 6", text: "Semester 6" }
+            ],
+            "Fourth Year": [
+                { value: "Semester 7", text: "Semester 7" },
+                { value: "Semester 8", text: "Semester 8" }
+            ]
+        };
+
+        yearSelect.addEventListener("change", () => {
+            const selectedYear = yearSelect.value;
+            const allowedSemesters = semesterOptionsMap[selectedYear];
+
+            semesterSelect.innerHTML = `<option value="" disabled selected>Select semester</option>`;
+
+            if (allowedSemesters) {
+                allowedSemesters.forEach(sem => {
+                    const opt = document.createElement("option");
+                    opt.value = sem.value;
+                    opt.textContent = sem.text;
+                    semesterSelect.appendChild(opt);
+                });
+            } else {
+                const allSemesters = [
+                    "Semester 1", "Semester 2", "Semester 3", "Semester 4",
+                    "Semester 5", "Semester 6", "Semester 7", "Semester 8"
+                ];
+                allSemesters.forEach(sem => {
+                    const opt = document.createElement("option");
+                    opt.value = sem;
+                    opt.textContent = sem;
+                    semesterSelect.appendChild(opt);
+                });
+            }
+
+            const otherOpt = document.createElement("option");
+            otherOpt.value = "Other";
+            otherOpt.textContent = "Other";
+            semesterSelect.appendChild(otherOpt);
         });
     }
 
