@@ -3,13 +3,20 @@
    Firebase User Authentication, State Observer, Logout & UI Component Handlers
    ========================================================================== */
 
-import { auth, checkUserProfile } from "./firebase-config.js";
+import { auth, db, checkUserProfile } from "./firebase-config.js";
 import {
     signOut,
     onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
-import { fetchResources } from "./services/resources.js";
+import {
+    collection,
+    query,
+    where,
+    onSnapshot
+} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+import { subscribeResources } from "./services/resources.js";
 import { fetchUserBookmarks, addBookmark, removeBookmark } from "./services/bookmarks.js";
+import { escapeHtml } from "./utils.js";
 
 /* ----------------------------------------------------------------------
    1. DATA LAYER (Live Firestore Integration with Fallbacks)
@@ -156,44 +163,85 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     /**
-     * Renders dashboard content components (Stats, Recent Resources, Progress)
+     * Renders overview stats, recent academic resources, and study progress with Real-Time listeners.
      */
-    function renderDashboardContent() {
-        // Render Stats Overview
+    async function renderDashboardContent(user) {
         const statRes = document.getElementById("statResources");
         const statPap = document.getElementById("statPapers");
         const statSav = document.getElementById("statSaved");
         const statUpl = document.getElementById("statUploads");
 
-        if (statRes) statRes.textContent = overviewStatsData.resources;
-        if (statPap) statPap.textContent = overviewStatsData.pastPapers;
-        if (statSav) statSav.textContent = overviewStatsData.savedItems;
-        /**
-         * Renders overview stats, recent academic resources, and study progress.
-         */
-        async function renderDashboardContent(user) {
-            // Render Stat Cards
-            const statRes = document.getElementById("statResources");
-            const statPap = document.getElementById("statPapers");
-            const statSav = document.getElementById("statSaved");
-            const statUpl = document.getElementById("statUploads");
+        // 1. Real-Time Stat Listener for Resources and User Uploads
+        try {
+            const resColRef = collection(db, "resources");
+            const resQuery = query(resColRef, where("status", "==", "active"));
+            onSnapshot(resQuery, (snapshot) => {
+                let totalCount = 0;
+                let userUploadCount = 0;
 
-            if (statRes) statRes.textContent = overviewStatsData.resources;
-            if (statPap) statPap.textContent = overviewStatsData.pastPapers;
-            if (statSav) statSav.textContent = overviewStatsData.savedItems;
-            if (statUpl) statUpl.textContent = overviewStatsData.uploads;
-
-            // Render Recent Resources from Firestore
-            const resourcesList = document.getElementById("resourcesList");
-            if (resourcesList) {
-                try {
-                    const liveResources = await fetchResources({ limitCount: 4 });
-
-                    let userBookmarks = [];
-                    if (user) {
-                        try { userBookmarks = await fetchUserBookmarks(user.uid); } catch (e) { }
+                snapshot.forEach(docSnap => {
+                    totalCount++;
+                    const data = docSnap.data();
+                    if (user && data.uploaderUid === user.uid) {
+                        userUploadCount++;
                     }
-                    const bookmarkSet = new Set(userBookmarks.map(b => b.targetId));
+                });
+
+                if (statRes) statRes.textContent = totalCount;
+                if (statUpl) statUpl.textContent = userUploadCount;
+            }, (err) => {
+                console.warn("Resources stat listener warning:", err);
+            });
+        } catch (e) {
+            console.warn("Resources stat subscription error:", e);
+        }
+
+        // 2. Real-Time Stat Listener for Past Papers
+        try {
+            const papColRef = collection(db, "past_papers");
+            onSnapshot(papColRef, (snapshot) => {
+                if (statPap) statPap.textContent = snapshot.size;
+            }, (err) => {
+                console.warn("Past papers stat listener warning:", err);
+            });
+        } catch (e) {
+            console.warn("Past papers stat subscription error:", e);
+        }
+
+        // 3. Real-Time Stat Listener for User Saved Bookmarks
+        if (user) {
+            try {
+                const bookColRef = collection(db, "users", user.uid, "bookmarks");
+                onSnapshot(bookColRef, (snapshot) => {
+                    if (statSav) statSav.textContent = snapshot.size;
+                }, (err) => {
+                    console.warn("Bookmarks stat listener warning:", err);
+                });
+            } catch (e) {
+                console.warn("Bookmarks stat subscription error:", e);
+            }
+        }
+
+        // 4. Real-Time Listener for Recent Resources Feed
+        const resourcesList = document.getElementById("resourcesList");
+        if (resourcesList) {
+            try {
+                let userBookmarks = [];
+                if (user) {
+                    try { userBookmarks = await fetchUserBookmarks(user.uid); } catch (e) { }
+                }
+                const bookmarkSet = new Set(userBookmarks.map(b => b.targetId));
+
+                subscribeResources({ limitCount: 4 }, (liveResources, error) => {
+                    if (error) {
+                        console.error("Dashboard Firestore Resource Subscribe Error:", error);
+                        resourcesList.innerHTML = `
+                            <div class="resource-card" style="justify-content: center; text-align: center; padding: 20px;">
+                                <span class="resource-meta">Unable to load recent resources feed.</span>
+                            </div>
+                        `;
+                        return;
+                    }
 
                     if (liveResources.length > 0) {
                         resourcesList.innerHTML = liveResources.map(item => {
@@ -202,22 +250,22 @@ document.addEventListener("DOMContentLoaded", () => {
                             if (item.category === "assignment") badgeClass = "badge-paper";
 
                             return `
-                            <div class="resource-card" data-id="${item.id}">
-                                <div class="resource-left">
-                                    <span class="resource-type-badge ${badgeClass}">${(item.category || "Notes").toUpperCase()}</span>
-                                    <div class="resource-details">
-                                        <h3 class="resource-title">${item.title}</h3>
-                                        <span class="resource-meta">${item.subject} • ${item.department || 'General'} • By ${item.uploaderName || 'Student'}</span>
+                                <div class="resource-card" data-id="${escapeHtml(item.id)}">
+                                    <div class="resource-left">
+                                        <span class="resource-type-badge ${badgeClass}">${escapeHtml((item.category || "Notes").toUpperCase())}</span>
+                                        <div class="resource-details">
+                                            <h3 class="resource-title">${escapeHtml(item.title)}</h3>
+                                            <span class="resource-meta">${escapeHtml(item.subject)} • ${escapeHtml(item.department || 'General')} • By ${escapeHtml(item.uploaderName || 'Student')}</span>
+                                        </div>
+                                    </div>
+                                    <div class="resource-actions">
+                                        <button class="btn-icon-secondary bookmark-btn ${isSaved ? 'bookmarked' : ''}" data-id="${escapeHtml(item.id)}" aria-label="Save resource" title="Bookmark">
+                                            <svg viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
+                                        </button>
+                                        <a href="resources.html" class="btn-sm-primary view-btn" style="text-decoration: none;">View</a>
                                     </div>
                                 </div>
-                                <div class="resource-actions">
-                                    <button class="btn-icon-secondary bookmark-btn ${isSaved ? 'bookmarked' : ''}" data-id="${item.id}" aria-label="Save resource" title="Bookmark">
-                                        <svg viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
-                                    </button>
-                                    <a href="resources.html" class="btn-sm-primary view-btn" style="text-decoration: none;">View</a>
-                                </div>
-                            </div>
-                        `;
+                            `;
                         }).join("");
 
                         // Attach real bookmark action handlers
@@ -256,29 +304,25 @@ document.addEventListener("DOMContentLoaded", () => {
 
                     } else {
                         resourcesList.innerHTML = `
-                        <div class="resource-card" style="justify-content: center; text-align: center; padding: 24px;">
-                            <span class="resource-meta">No academic resources uploaded yet. <a href="resources.html" style="color: var(--primary); font-weight: 700; text-decoration: none;">Upload the first resource &rarr;</a></span>
-                        </div>
-                    `;
+                            <div class="resource-card" style="justify-content: center; text-align: center; padding: 24px;">
+                                <span class="resource-meta">No academic resources uploaded yet. <a href="resources.html" style="color: var(--primary); font-weight: 700; text-decoration: none;">Upload the first resource &rarr;</a></span>
+                            </div>
+                        `;
                     }
+                });
 
-                } catch (error) {
-                    console.error("Dashboard Firestore Resource Fetch Error:", error);
-                    resourcesList.innerHTML = `
-                    <div class="resource-card" style="justify-content: center; text-align: center; padding: 20px;">
-                        <span class="resource-meta">Unable to load recent resources feed.</span>
-                    </div>
-                `;
-                }
+            } catch (error) {
+                console.error("Dashboard Firestore Resource Setup Error:", error);
             }
+        }
 
-            // Render Continue Studying Progress Cards
-            const progressList = document.getElementById("progressList");
-            if (progressList) {
-                progressList.innerHTML = continueStudyingData.map(course => `
+        // Render Continue Studying Progress Cards
+        const progressList = document.getElementById("progressList");
+        if (progressList) {
+            progressList.innerHTML = continueStudyingData.map(course => `
                 <div class="progress-item">
                     <div class="progress-item-header">
-                        <span class="progress-subject">${course.subject}</span>
+                        <span class="progress-subject">${escapeHtml(course.subject)}</span>
                         <span class="progress-percent">${course.percent}%</span>
                     </div>
                     <div class="progress-track">
@@ -286,8 +330,8 @@ document.addEventListener("DOMContentLoaded", () => {
                     </div>
                 </div>
             `).join("");
-            }
         }
+    }
 
         /* ----------------------------------------------------------------------
            5. FIREBASE AUTH STATE OBSERVER & PROFILE CHECK
