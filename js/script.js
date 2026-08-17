@@ -1,10 +1,17 @@
 /* ==========================================================================
-   ACADEX CLIENT SIDE LOGIC
-   Theme Management, Password Visibility, Accessible Toast Notifications & Handlers
+   ACADEX CLIENT SIDE LOGIC & FIREBASE GOOGLE AUTHENTICATION
+   Theme Management, Password Visibility, Accessible Toast Notifications & Firebase Auth
    ========================================================================== */
 
+import { auth, checkUserProfile } from "./firebase-config.js";
+import {
+    GoogleAuthProvider,
+    signInWithPopup,
+    onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+
 document.addEventListener("DOMContentLoaded", () => {
-    
+
     /* ----------------------------------------------------------------------
        1. THEME CONTROLLER
        ---------------------------------------------------------------------- */
@@ -71,7 +78,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (passwordInput && togglePasswordBtn) {
         togglePasswordBtn.addEventListener("click", () => {
             const isPassword = passwordInput.type === "password";
-            
+
             passwordInput.type = isPassword ? "text" : "password";
             togglePasswordBtn.classList.toggle("showing", isPassword);
             togglePasswordBtn.setAttribute(
@@ -89,7 +96,7 @@ document.addEventListener("DOMContentLoaded", () => {
     /**
      * Shows a polished, accessible toast message.
      * @param {string} message - Text to display
-     * @param {boolean} isSuccess - Success or info state
+     * @param {boolean} isSuccess - Success or info/error state
      */
     function showToast(message, isSuccess = true) {
         if (!toastContainer) return;
@@ -99,7 +106,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const toast = document.createElement("div");
         toast.className = "toast";
-        
+
         const iconSvg = isSuccess
             ? `<svg class="toast-icon toast-lime" viewBox="0 0 24 24" aria-hidden="true">
                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
@@ -124,14 +131,110 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     /* ----------------------------------------------------------------------
-       4. FORM & ACTION INTERACTION HANDLERS
+       4. AUTH STATE MONITORING & PROFILE CHECK
+       ---------------------------------------------------------------------- */
+    try {
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                console.log("User is already authenticated:", user.email);
+                const profileResult = await checkUserProfile(user.uid);
+                if (profileResult.profileComplete) {
+                    window.location.href = "dashboard.html";
+                } else {
+                    window.location.href = "onboarding.html";
+                }
+            }
+        });
+    } catch (err) {
+        console.warn("Firebase auth state observer warning:", err);
+    }
+
+    /* ----------------------------------------------------------------------
+       5. FIREBASE GOOGLE AUTHENTICATION HANDLER
+       ---------------------------------------------------------------------- */
+    const googleLoginBtn = document.getElementById("googleLogin");
+    let isAuthenticating = false;
+
+    if (googleLoginBtn) {
+        googleLoginBtn.addEventListener("click", async (e) => {
+            e.preventDefault();
+
+            // Prevent multiple simultaneous sign-in attempts
+            if (isAuthenticating) return;
+
+            const originalBtnHTML = googleLoginBtn.innerHTML;
+
+            try {
+                isAuthenticating = true;
+
+                // Loading State
+                googleLoginBtn.disabled = true;
+                googleLoginBtn.innerHTML = "<span>Signing in...</span>";
+
+                const provider = new GoogleAuthProvider();
+                const result = await signInWithPopup(auth, provider);
+                const user = result.user;
+
+                console.log("Firebase Google Authentication successful:", user.email);
+
+                // Format user first name for welcome toast
+                const firstName = user.displayName
+                    ? user.displayName.split(" ")[0]
+                    : "Student";
+
+                showToast(`Welcome to Acadex, ${firstName}!`, true);
+
+                // Check if user has a completed Firestore profile
+                const profileResult = await checkUserProfile(user.uid);
+
+                // Redirect based on profile status
+                setTimeout(() => {
+                    if (profileResult.profileComplete) {
+                        window.location.href = "dashboard.html";
+                    } else {
+                        window.location.href = "onboarding.html";
+                    }
+                }, 1000);
+
+            } catch (error) {
+                console.error("Firebase Google Auth Error:", error);
+
+                // Restore button state
+                googleLoginBtn.disabled = false;
+                googleLoginBtn.innerHTML = originalBtnHTML;
+                isAuthenticating = false;
+
+                // Handle specific Firebase error codes
+                const errorCode = error.code || "";
+
+                if (errorCode === "auth/popup-closed-by-user" || errorCode === "popup-closed-by-user") {
+                    showToast("Sign-in was cancelled.", false);
+                } else if (errorCode === "auth/popup-blocked") {
+                    showToast("Your browser blocked the sign-in popup. Please allow popups and try again.", false);
+                } else if (errorCode === "auth/network-request-failed") {
+                    showToast("Network error. Please check your connection and try again.", false);
+                } else if (errorCode === "auth/unauthorized-domain") {
+                    showToast("Domain not authorized. Please add your domain to Firebase Console > Authentication > Settings.", false);
+                } else if (errorCode === "auth/operation-not-allowed") {
+                    showToast("Google sign-in is not enabled. Please enable Google provider in Firebase Console > Authentication.", false);
+                } else if (errorCode === "auth/operation-not-supported-in-this-environment") {
+                    showToast("Firebase Auth requires a local server. Please open using Live Server (http://localhost).", false);
+                } else if (errorCode.includes("invalid-api-key") || errorCode.includes("api-key-not-valid") || (error.message && error.message.includes("API_KEY"))) {
+                    showToast("Please configure real Firebase credentials in js/firebase-config.js.", false);
+                } else {
+                    showToast(`Sign-in error (${errorCode || 'unknown'}). Please check console.`, false);
+                }
+            }
+        });
+    }
+
+    /* ----------------------------------------------------------------------
+       6. EMAIL / PASSWORD FORM HANDLER
        ---------------------------------------------------------------------- */
     const loginForm = document.getElementById("loginForm");
     const emailInput = document.getElementById("email");
-    const googleLoginBtn = document.getElementById("googleLogin");
     const forgotPasswordLink = document.getElementById("forgotPassword");
 
-    // Email / Password Submit Handler
     if (loginForm) {
         loginForm.addEventListener("submit", (e) => {
             e.preventDefault();
@@ -146,7 +249,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 return;
             }
 
-            // Simple client-side email format check
+            // Client-side email validation
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(emailVal)) {
                 showToast("Please enter a valid email address.", false);
@@ -154,16 +257,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 return;
             }
 
-            console.log("Login requested for:", emailVal);
-            showToast(`Sign in requested for ${emailVal}. Firebase auth will connect next.`);
-        });
-    }
-
-    // Google Login Handler
-    if (googleLoginBtn) {
-        googleLoginBtn.addEventListener("click", () => {
-            console.log("Google Sign-In requested");
-            showToast("Google Sign-In will connect with Firebase next.");
+            // Real email authentication is pending
+            showToast("Email sign-in will be available soon.", false);
         });
     }
 
@@ -171,8 +266,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (forgotPasswordLink) {
         forgotPasswordLink.addEventListener("click", (e) => {
             e.preventDefault();
-            console.log("Password reset requested");
-            showToast("Password reset will connect with Firebase next.");
+            showToast("Password reset will connect with Firebase next.", true);
         });
     }
-});
+});

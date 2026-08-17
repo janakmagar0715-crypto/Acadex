@@ -1,0 +1,402 @@
+/* ==========================================================================
+   ACADEX ONBOARDING STYLES
+   Direction B Color System & Multi-Step Progressive Form Layout
+   ========================================================================== */
+
+.onboarding-layout {
+  position: relative;
+  z-index: 1;
+  width: min(640px, 92%);
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 40px 0 60px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* Header Branding */
+.onboarding-header-brand {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.onboarding-logo {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  margin-bottom: 12px;
+  filter: drop-shadow(0 8px 16px rgba(37, 99, 235, 0.18));
+}
+
+/* Multi-Step Stepper Progress Bar */
+.stepper-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  margin-bottom: 32px;
+  padding: 0 16px;
+}
+
+.stepper-track {
+  position: absolute;
+  top: 18px;
+  left: 48px;
+  right: 48px;
+  height: 2px;
+  background: var(--border);
+  z-index: 0;
+}
+
+.stepper-fill {
+  height: 100%;
+  width: 0%;
+  background: var(--primary);
+  transition: width 0.35s ease;
+}
+
+.step-item {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.step-circle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 2px solid var(--border);
+  color: var(--text-muted);
+  font-size: 13.5px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+}
+
+.step-item.active .step-circle {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: #FFFFFF;
+  box-shadow: 0 0 0 4px var(--primary-light-alpha);
+}
+
+.step-item.completed .step-circle {
+  border-color: var(--lime);
+  background: var(--lime);
+  color: #0D1117;
+}
+
+.step-label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-muted);
+  transition: color var(--transition-fast);
+}
+
+.step-item.active .step-label {
+  color: var(--primary);
+}
+
+.step-item.completed .step-label {
+  color: var(--text);
+}
+
+/* Onboarding Main Card */
+.onboarding-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  padding: 40px;
+  box-shadow: var(--shadow-card);
+  transition: background-color var(--transition-slow), border-color var(--transition-slow);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Step Title Header */
+.step-header {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.step-title {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+
+.step-subtitle {
+  font-size: 14.5px;
+  color: var(--text-muted);
+}
+
+/* User Google Profile Preview (Step 1) */
+.user-profile-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.user-avatar-large {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--primary);
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: 800;
+  border: 3px solid var(--surface);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+}
+
+.email-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-secondary);
+  border: 1px solid var(--border);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.email-badge svg {
+  width: 14px;
+  height: 14px;
+  stroke: currentColor;
+  stroke-width: 2;
+  fill: none;
+}
+
+/* Form Input Groups & Select Components */
+.name-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.select-field {
+  width: 100%;
+  height: 52px;
+  padding: 0 40px 0 16px;
+  border-radius: var(--radius-input);
+  border: 1px solid var(--border);
+  background: var(--surface-secondary);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 14.5px;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.select-wrapper {
+  position: relative;
+}
+
+.select-wrapper::after {
+  content: "";
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 6px solid var(--text-muted);
+  pointer-events: none;
+}
+
+.select-field:hover {
+  border-color: var(--border-hover);
+}
+
+.select-field:focus {
+  border-color: var(--primary);
+  background: var(--surface);
+  box-shadow: var(--shadow-focus);
+}
+
+/* Step 3: Interest Chips Selection */
+.interests-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin: 16px 0 28px;
+}
+
+.interest-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border);
+  background: var(--surface-secondary);
+  color: var(--text-muted);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  user-select: none;
+  transition: var(--transition);
+}
+
+.interest-chip:hover {
+  border-color: var(--primary);
+  color: var(--text);
+}
+
+.interest-chip.selected {
+  background: var(--primary-light-alpha);
+  border-color: var(--primary);
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.chip-check {
+  width: 14px;
+  height: 14px;
+  stroke: var(--primary);
+  stroke-width: 2.5;
+  fill: none;
+  display: none;
+}
+
+.interest-chip.selected .chip-check {
+  display: block;
+}
+
+/* Profile Preview Summary Box (Step 3) */
+.profile-preview-card {
+  margin-top: 24px;
+  padding: 20px;
+  border-radius: 16px;
+  background: var(--surface-secondary);
+  border: 1px solid var(--border);
+}
+
+.preview-card-header {
+  margin-bottom: 12px;
+}
+
+.preview-badge {
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  color: var(--lime);
+  text-transform: uppercase;
+}
+
+.preview-card-body {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.preview-card-details {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  overflow: hidden;
+}
+
+.preview-name {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.preview-email {
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+.preview-meta {
+  margin-top: 4px;
+}
+
+.preview-academic-tag {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--primary);
+  background: var(--primary-light-alpha);
+  padding: 4px 10px;
+  border-radius: 6px;
+  display: inline-block;
+}
+
+/* Action Control Buttons */
+.step-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 32px;
+}
+
+.btn-secondary {
+  height: 50px;
+  padding: 0 24px;
+  border-radius: var(--radius-btn);
+  border: 1px solid var(--border);
+  background: var(--surface-secondary);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 14.5px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: var(--transition);
+}
+
+.btn-secondary:hover {
+  background: var(--surface-hover);
+  border-color: var(--border-hover);
+}
+
+/* Responsive */
+@media (max-width: 540px) {
+  .onboarding-card {
+    padding: 28px 20px;
+  }
+  
+  .name-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .step-title {
+    font-size: 22px;
+  }
+  
+  .stepper-container {
+    padding: 0;
+  }
+  
+  .step-label {
+    font-size: 11px;
+  }
+}

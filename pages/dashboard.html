@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Acadex Dashboard - Access student notes, past papers, assignments, and academic resources.">
+
+    <title>Dashboard | Acadex</title>
+
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Design System & Dashboard Styles -->
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/dashboard.css">
+    
+    <!-- Dashboard Client Logic (ES Module) -->
+    <script type="module" src="../js/dashboard.js"></script>
+</head>
+
+<body>
+
+    <!-- Ambient Background Effects -->
+    <div class="background-effects" aria-hidden="true">
+        <div class="grid-pattern"></div>
+        <div class="ambient-orb orb-primary"></div>
+        <div class="ambient-orb orb-lime"></div>
+    </div>
+
+    <!-- Top Navigation Header -->
+    <header class="dashboard-header">
+        <nav class="nav-container" aria-label="Main Navigation">
+
+            <!-- Brand Logo & Name -->
+            <a href="dashboard.html" class="nav-brand" aria-label="Acadex Dashboard Home">
+                <img src="../assets/logo/acadex-icon.svg" alt="Acadex Logo" class="nav-logo" width="36" height="36">
+                <span class="nav-title">Acadex</span>
+            </a>
+
+            <!-- Desktop Navigation Links -->
+            <ul class="nav-links" role="menubar">
+                <li role="none">
+                    <a href="dashboard.html" class="nav-link active" role="menuitem">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                        <span>Home</span>
+                    </a>
+                </li>
+                <li role="none">
+                    <a href="#" class="nav-link" role="menuitem">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                        <span>Academics</span>
+                    </a>
+                </li>
+                <li role="none">
+                    <a href="#" class="nav-link" role="menuitem">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                        <span>Past Papers</span>
+                    </a>
+                </li>
+                <li role="none">
+                    <a href="#" class="nav-link" role="menuitem">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+                        <span>Marketplace</span>
+                    </a>
+                </li>
+                <li role="none">
+                    <a href="#" class="nav-link" role="menuitem">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
+                        <span>Saved</span>
+                    </a>
+                </li>
+            </ul>
+
+            <!-- Header Controls: Theme & User Menu -->
+            <div class="nav-actions">
+
+                <!-- Theme Toggle Button -->
+                <button id="themeToggle" class="nav-action-btn" aria-label="Toggle color theme" title="Toggle theme">
+                    <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+
+                <!-- User Profile Trigger & Dropdown Menu -->
+                <div class="profile-menu-container">
+                    <button id="profileTrigger" class="profile-trigger" aria-label="User Account Menu" aria-expanded="false" aria-haspopup="true">
+                        <div id="userAvatar" class="user-avatar">--</div>
+                        <span id="userNameLabel" class="user-name-label">Loading...</span>
+                        <svg class="chevron-icon" viewBox="0 0 24 24" aria-hidden="true">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </button>
+
+                    <div id="userDropdown" class="user-dropdown" role="menu">
+                        <div class="dropdown-user-header">
+                            <div id="dropdownAvatar" class="user-avatar">--</div>
+                            <div class="dropdown-user-info">
+                                <span id="dropdownName" class="dropdown-name">Loading...</span>
+                                <span id="dropdownEmail" class="dropdown-email">loading...</span>
+                            </div>
+                        </div>
+
+                        <div class="dropdown-divider"></div>
+
+                        <button class="dropdown-item" id="menuProfileBtn" role="menuitem">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                            <span>Profile</span>
+                        </button>
+                        <button class="dropdown-item" id="menuSettingsBtn" role="menuitem">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                            <span>Settings</span>
+                        </button>
+
+                        <div class="dropdown-divider"></div>
+
+                        <button class="dropdown-item danger-item" id="logoutBtn" role="menuitem">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                            <span>Logout</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Mobile Menu Button -->
+                <button id="mobileMenuBtn" class="mobile-toggle-btn" aria-label="Toggle mobile menu">
+                    <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none">
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                </button>
+
+            </div>
+
+        </nav>
+    </header>
+
+    <!-- Mobile Drawer Container -->
+    <div id="mobileDrawer" class="mobile-drawer" aria-hidden="true">
+        <ul class="mobile-nav-links">
+            <li><a href="dashboard.html" class="mobile-nav-link active">Home</a></li>
+            <li><a href="#" class="mobile-nav-link">Academics</a></li>
+            <li><a href="#" class="mobile-nav-link">Past Papers</a></li>
+            <li><a href="#" class="mobile-nav-link">Marketplace</a></li>
+            <li><a href="#" class="mobile-nav-link">Saved</a></li>
+        </ul>
+    </div>
+
+    <!-- Main Dashboard Body -->
+    <main class="dashboard-container">
+
+        <!-- Welcome Banner Section -->
+        <section class="welcome-banner">
+            <div class="welcome-text-group">
+                <h1 id="welcomeTitle" class="welcome-title">Good morning, Student</h1>
+                <p class="welcome-subtitle">Ready to continue your academic journey?</p>
+            </div>
+            <div class="semester-badge">
+                <span class="badge-dot"></span>
+                <span>Fall Semester 2024</span>
+            </div>
+        </section>
+
+        <!-- Stats Overview Grid -->
+        <section class="stats-grid" id="statsGrid">
+            <!-- Stat 1: Resources -->
+            <div class="stat-card">
+                <div class="stat-icon-box">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-value" id="statResources">128</span>
+                    <span class="stat-label">Resources</span>
+                </div>
+            </div>
+
+            <!-- Stat 2: Past Papers -->
+            <div class="stat-card">
+                <div class="stat-icon-box lime-box">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-value" id="statPapers">64</span>
+                    <span class="stat-label">Past Papers</span>
+                </div>
+            </div>
+
+            <!-- Stat 3: Saved Items -->
+            <div class="stat-card">
+                <div class="stat-icon-box">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-value" id="statSaved">12</span>
+                    <span class="stat-label">Saved Items</span>
+                </div>
+            </div>
+
+            <!-- Stat 4: Uploads -->
+            <div class="stat-card">
+                <div class="stat-icon-box lime-box">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-value" id="statUploads">8</span>
+                    <span class="stat-label">Uploads</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Main Dashboard 2-Column Layout -->
+        <div class="dashboard-grid">
+
+            <!-- Main Left Column -->
+            <div class="dashboard-main-col">
+
+                <!-- Quick Actions Grid -->
+                <section>
+                    <div class="section-header">
+                        <h2 class="section-title">Quick Actions</h2>
+                    </div>
+                    
+                    <div class="quick-actions-grid">
+                        
+                        <!-- Quick Action 1 -->
+                        <a href="#" class="action-card" id="actionUpload">
+                            <div class="action-card-header">
+                                <div class="action-icon-wrapper">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                                </div>
+                                <svg class="action-arrow" viewBox="0 0 24 24" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                            </div>
+                            <div class="action-card-body">
+                                <h3>Upload Resource</h3>
+                                <p>Share notes, past papers, or assignments with fellow students.</p>
+                            </div>
+                        </a>
+
+                        <!-- Quick Action 2 -->
+                        <a href="#" class="action-card" id="actionNotes">
+                            <div class="action-card-header">
+                                <div class="action-icon-wrapper">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                                </div>
+                                <svg class="action-arrow" viewBox="0 0 24 24" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                            </div>
+                            <div class="action-card-body">
+                                <h3>Find Notes</h3>
+                                <p>Browse curated lecture notes, summaries, and study guides.</p>
+                            </div>
+                        </a>
+
+                        <!-- Quick Action 3 -->
+                        <a href="#" class="action-card" id="actionPapers">
+                            <div class="action-card-header">
+                                <div class="action-icon-wrapper">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                                </div>
+                                <svg class="action-arrow" viewBox="0 0 24 24" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                            </div>
+                            <div class="action-card-body">
+                                <h3>Find Past Papers</h3>
+                                <p>Practice with previous exam papers and solution keys.</p>
+                            </div>
+                        </a>
+
+                        <!-- Quick Action 4 -->
+                        <a href="#" class="action-card" id="actionMarketplace">
+                            <div class="action-card-header">
+                                <div class="action-icon-wrapper">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+                                </div>
+                                <svg class="action-arrow" viewBox="0 0 24 24" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                            </div>
+                            <div class="action-card-body">
+                                <h3>Marketplace</h3>
+                                <p>Buy and sell secondhand textbooks and academic tools.</p>
+                            </div>
+                        </a>
+
+                    </div>
+                </section>
+
+                <!-- Recent Resources Section -->
+                <section>
+                    <div class="section-header">
+                        <h2 class="section-title">Recent Resources</h2>
+                        <a href="#" class="section-link">View all →</a>
+                    </div>
+
+                    <div class="resources-list" id="resourcesList">
+                        <!-- Dynamic Demo Items populated via JS -->
+                    </div>
+                </section>
+
+            </div>
+
+            <!-- Sidebar Right Column -->
+            <div class="dashboard-sidebar-col">
+
+                <!-- Continue Studying Section -->
+                <div class="sidebar-widget">
+                    <h2 class="widget-title">Continue Studying</h2>
+                    <div class="progress-list" id="progressList">
+                        <!-- Progress Cards populated via JS -->
+                    </div>
+                </div>
+
+                <!-- Community Notice Widget -->
+                <div class="sidebar-widget">
+                    <h2 class="widget-title">Notice Board</h2>
+                    <div class="notice-card">
+                        <span class="notice-tag">Announcement</span>
+                        <p class="notice-text">Fall Semester Midterm exam schedules and study groups are now active!</p>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="toast-container" aria-live="polite"></div>
+
+</body>
+
+</html>

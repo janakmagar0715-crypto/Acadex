@@ -14,3 +14,7 @@ dist/
 build/
 .env
 .env.local
+
+# Temp Scratch & Generated PDFs
+scratch/
+*.pdf

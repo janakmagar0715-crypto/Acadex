@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Set up your Acadex student profile to access notes, past papers, and academic resources.">
+
+    <title>Complete Your Profile | Acadex</title>
+
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Design System & Onboarding Styles -->
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/onboarding.css">
+    
+    <!-- Onboarding Script (ES Module) -->
+    <script type="module" src="../js/onboarding.js"></script>
+</head>
+
+<body>
+
+    <!-- Ambient Background Effects -->
+    <div class="background-effects" aria-hidden="true">
+        <div class="grid-pattern"></div>
+        <div class="ambient-orb orb-primary"></div>
+        <div class="ambient-orb orb-lime"></div>
+    </div>
+
+    <!-- Floating Theme Toggle Button -->
+    <button id="themeToggle" class="theme-toggle" aria-label="Toggle color theme" title="Toggle theme">
+        <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+        <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+    </button>
+
+    <!-- Main Onboarding Container -->
+    <main class="onboarding-layout">
+
+        <div class="onboarding-header-brand">
+            <img src="../assets/logo/acadex-icon.svg" alt="Acadex Logo" class="onboarding-logo" width="64" height="64">
+        </div>
+
+        <!-- Multi-Step Progress Stepper -->
+        <div class="stepper-container" role="progressbar" aria-valuemin="1" aria-valuemax="3" aria-valuenow="1">
+            <div class="stepper-track">
+                <div id="stepperFill" class="stepper-fill"></div>
+            </div>
+
+            <div class="step-item active" id="stepIndicator1">
+                <div class="step-circle">1</div>
+                <span class="step-label">Personal</span>
+            </div>
+
+            <div class="step-item" id="stepIndicator2">
+                <div class="step-circle">2</div>
+                <span class="step-label">Academic</span>
+            </div>
+
+            <div class="step-item" id="stepIndicator3">
+                <div class="step-circle">3</div>
+                <span class="step-label">Interests</span>
+            </div>
+        </div>
+
+        <!-- Onboarding Card Form -->
+        <div class="onboarding-card">
+            <form id="onboardingForm" novalidate>
+
+                <!-- STEP 1: Personal Information -->
+                <div id="step1Content" class="step-content">
+                    <div class="step-header">
+                        <h1 class="step-title">Welcome to Acadex 👋</h1>
+                        <p class="step-subtitle">Let's set up your student profile.</p>
+                    </div>
+
+                    <div class="user-profile-preview">
+                        <div id="userAvatar" class="user-avatar-large">--</div>
+                        <div class="email-badge">
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                                <polyline points="22,6 12,13 2,6"></polyline>
+                            </svg>
+                            <span id="userEmailDisplay">student@acadex.edu</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group name-row">
+                        <div>
+                            <label for="firstName" class="form-label">First Name *</label>
+                            <input id="firstName" type="text" class="input-field" placeholder="e.g. Alex" required>
+                        </div>
+                        <div>
+                            <label for="lastName" class="form-label">Last Name *</label>
+                            <input id="lastName" type="text" class="input-field" placeholder="e.g. Morgan" required>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STEP 2: Academic Information -->
+                <div id="step2Content" class="step-content" style="display: none;">
+                    <div class="step-header">
+                        <h2 class="step-title">Academic Details 🎓</h2>
+                        <p class="step-subtitle">Tell us what you're currently studying.</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="department" class="form-label">Department / Program *</label>
+                        <div class="select-wrapper">
+                            <select id="department" class="select-field" required>
+                                <option value="" disabled selected>Select your department</option>
+                                <option value="Computer Science">Computer Science</option>
+                                <option value="Computer Engineering">Computer Engineering</option>
+                                <option value="Information Technology">Information Technology</option>
+                                <option value="BCA">BCA (Bachelor of Computer Applications)</option>
+                                <option value="BIM">BIM (Information Management)</option>
+                                <option value="Management">Management</option>
+                                <option value="Business">Business</option>
+                                <option value="Science">Science</option>
+                                <option value="Arts">Arts</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group name-row">
+                        <div>
+                            <label for="year" class="form-label">Academic Year *</label>
+                            <div class="select-wrapper">
+                                <select id="year" class="select-field" required>
+                                    <option value="" disabled selected>Select year</option>
+                                    <option value="First Year">First Year</option>
+                                    <option value="Second Year">Second Year</option>
+                                    <option value="Third Year">Third Year</option>
+                                    <option value="Fourth Year">Fourth Year</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="semester" class="form-label">Semester *</label>
+                            <div class="select-wrapper">
+                                <select id="semester" class="select-field" required>
+                                    <option value="" disabled selected>Select semester</option>
+                                    <option value="Semester 1">Semester 1</option>
+                                    <option value="Semester 2">Semester 2</option>
+                                    <option value="Semester 3">Semester 3</option>
+                                    <option value="Semester 4">Semester 4</option>
+                                    <option value="Semester 5">Semester 5</option>
+                                    <option value="Semester 6">Semester 6</option>
+                                    <option value="Semester 7">Semester 7</option>
+                                    <option value="Semester 8">Semester 8</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STEP 3: Optional Interests & Profile Summary -->
+                <div id="step3Content" class="step-content" style="display: none;">
+                    <div class="step-header">
+                        <h2 class="step-title">What are you interested in?</h2>
+                        <p class="step-subtitle">Choose topics you'd like to explore on Acadex (Optional).</p>
+                    </div>
+
+                    <div class="interests-grid" id="interestsGrid">
+                        <div class="interest-chip" data-value="Notes">
+                            <svg class="chip-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            <span>Notes</span>
+                        </div>
+                        <div class="interest-chip" data-value="Past Papers">
+                            <svg class="chip-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            <span>Past Papers</span>
+                        </div>
+                        <div class="interest-chip" data-value="Assignments">
+                            <svg class="chip-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            <span>Assignments</span>
+                        </div>
+                        <div class="interest-chip" data-value="Projects">
+                            <svg class="chip-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            <span>Projects</span>
+                        </div>
+                        <div class="interest-chip" data-value="Programming">
+                            <svg class="chip-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            <span>Programming</span>
+                        </div>
+                        <div class="interest-chip" data-value="Mathematics">
+                            <svg class="chip-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            <span>Mathematics</span>
+                        </div>
+                        <div class="interest-chip" data-value="Research">
+                            <svg class="chip-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            <span>Research</span>
+                        </div>
+                        <div class="interest-chip" data-value="Marketplace">
+                            <svg class="chip-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            <span>Marketplace</span>
+                        </div>
+                    </div>
+
+                    <!-- Profile Review Summary Box -->
+                    <div class="profile-preview-card">
+                        <div class="preview-card-header">
+                            <span class="preview-badge">PROFILE SUMMARY</span>
+                        </div>
+                        <div class="preview-card-body">
+                            <div id="previewAvatar" class="user-avatar">--</div>
+                            <div class="preview-card-details">
+                                <h4 id="previewFullName" class="preview-name">--</h4>
+                                <span id="previewEmail" class="preview-email">--</span>
+                                <div class="preview-meta">
+                                    <span id="previewAcademic" class="preview-academic-tag">--</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="step-controls">
+                    <button type="button" id="backBtn" class="btn-secondary" style="visibility: hidden;">Back</button>
+                    <button type="button" id="nextBtn" class="btn-primary">
+                        <span id="nextBtnLabel">Continue</span>
+                        <svg id="nextBtnIcon" viewBox="0 0 24 24" aria-hidden="true">
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                            <polyline points="12 5 19 12 12 19"></polyline>
+                        </svg>
+                    </button>
+                </div>
+
+            </form>
+        </div>
+
+    </main>
+
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="toast-container" aria-live="polite"></div>
+
+</body>
+
+</html>
