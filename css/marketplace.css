@@ -1,0 +1,73 @@
+/* ==========================================================================
+   ACADEX STUDENT MARKETPLACE V1 STYLES (css/marketplace.css)
+   Direction B Styling, Image Thumbnails, Price Pills, Condition Badges
+   ========================================================================== */
+
+/* Item Card Thumbnail Container */
+.item-thumbnail-box {
+  width: 100%;
+  height: 180px;
+  border-radius: var(--radius-input);
+  background: var(--surface-secondary);
+  overflow: hidden;
+  position: relative;
+  margin-bottom: 12px;
+  border: 1px solid var(--border);
+}
+
+.item-thumbnail-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.resource-card:hover .item-thumbnail-img {
+  transform: scale(1.04);
+}
+
+/* Price Pill Badge */
+.price-pill {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: var(--primary);
+  color: #FFFFFF;
+  font-weight: 800;
+  font-size: 13.5px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+}
+
+.price-pill-lg {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--lime);
+  margin-top: 4px;
+}
+
+/* Condition Badges */
+.badge-new {
+  background: rgba(132, 204, 22, 0.15);
+  color: var(--lime);
+  border: 1px solid rgba(132, 204, 22, 0.3);
+}
+
+.badge-likenew {
+  background: rgba(37, 99, 235, 0.12);
+  color: var(--primary);
+  border: 1px solid rgba(37, 99, 235, 0.25);
+}
+
+.badge-good {
+  background: rgba(234, 179, 8, 0.14);
+  color: #FACC15;
+  border: 1px solid rgba(234, 179, 8, 0.28);
+}
+
+.badge-fair {
+  background: rgba(148, 163, 184, 0.15);
+  color: #94A3B8;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+}

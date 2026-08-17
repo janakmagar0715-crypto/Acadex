@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Club Notices & Campus Events — Acadex</title>
+    <meta name="description" content="Discover campus club recruitments, workshops, hackathons, and announcements on Acadex.">
+    <link rel="icon" type="image/svg+xml" href="../assets/logo/acadex-icon.svg">
+
+    <!-- Fonts & Shared Styles -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/dashboard.css">
+    <link rel="stylesheet" href="../css/resources.css">
+    <link rel="stylesheet" href="../css/saved.css">
+    <link rel="stylesheet" href="../css/notices.css">
+
+    <!-- Notices Logic Module -->
+    <script type="module" src="../js/notices.js"></script>
+</head>
+
+<body>
+
+    <!-- --------------------------------------------------------------------
+       1. TOP NAVIGATION HEADER
+       -------------------------------------------------------------------- -->
+    <header class="navbar">
+        <div class="nav-container">
+            <!-- Brand Logo -->
+            <a href="dashboard.html" class="nav-brand" aria-label="Acadex Home">
+                <img src="../assets/logo/acadex-icon.svg" alt="Acadex Logo" class="nav-logo-icon">
+                <span class="nav-brand-text">Acadex</span>
+            </a>
+
+            <!-- Navigation Links -->
+            <nav class="nav-links" aria-label="Main Navigation">
+                <a href="dashboard.html" class="nav-link">Dashboard</a>
+                <a href="resources.html" class="nav-link">Resources</a>
+                <a href="past-papers.html" class="nav-link">Past Papers</a>
+                <a href="marketplace.html" class="nav-link">Marketplace</a>
+                <a href="notices.html" class="nav-link active" aria-current="page">Notices</a>
+                <a href="saved.html" class="nav-link">Saved</a>
+            </nav>
+
+            <!-- Navigation Actions & Profile Dropdown -->
+            <div class="nav-actions">
+                <!-- Theme Toggle Button -->
+                <button id="themeToggle" class="btn-icon" aria-label="Switch theme" title="Toggle theme">
+                    <svg class="sun-icon" viewBox="0 0 24 24" aria-hidden="true">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                    <svg class="moon-icon" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                </button>
+
+                <!-- User Profile Menu -->
+                <div class="profile-dropdown-container">
+                    <button id="profileMenuBtn" class="profile-btn" aria-expanded="false" aria-label="User profile menu">
+                        <div id="userAvatar" class="user-avatar-sm">--</div>
+                        <span id="userNameLabel" class="user-name-text">Student</span>
+                        <svg class="dropdown-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </button>
+
+                    <!-- Dropdown Menu -->
+                    <div id="profileDropdown" class="profile-dropdown" role="menu">
+                        <div class="dropdown-header">
+                            <span id="dropdownName" class="dropdown-user-name">Student Name</span>
+                            <span id="dropdownEmail" class="dropdown-user-email">student@acadex.edu</span>
+                        </div>
+                        <div class="dropdown-divider"></div>
+                        <a href="dashboard.html" class="dropdown-item" role="menuitem">
+                            <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+                            <span>Dashboard</span>
+                        </a>
+                        <button id="logoutBtn" class="dropdown-item logout-item" role="menuitem">
+                            <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                            <span>Sign Out</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Mobile Drawer Toggle -->
+                <button id="mobileDrawerToggle" class="btn-icon mobile-drawer-btn" aria-label="Open navigation menu">
+                    <svg viewBox="0 0 24 24"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Mobile Drawer Menu -->
+    <div id="mobileDrawer" class="mobile-drawer">
+        <div class="drawer-header">
+            <span class="drawer-title">Navigation</span>
+            <button id="closeDrawerBtn" class="btn-icon" aria-label="Close navigation menu">
+                <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+        </div>
+        <div class="drawer-links">
+            <a href="dashboard.html" class="drawer-link">Dashboard</a>
+            <a href="resources.html" class="drawer-link">Resources</a>
+            <a href="past-papers.html" class="drawer-link">Past Papers</a>
+            <a href="marketplace.html" class="drawer-link">Marketplace</a>
+            <a href="notices.html" class="drawer-link active">Notices</a>
+            <a href="saved.html" class="drawer-link">Saved</a>
+        </div>
+    </div>
+    <div id="drawerOverlay" class="drawer-overlay"></div>
+
+    <!-- --------------------------------------------------------------------
+       2. MAIN NOTICES LAYOUT
+       -------------------------------------------------------------------- -->
+    <main class="resources-main">
+        <div class="resources-container">
+
+            <!-- Page Header & Action -->
+            <div class="resources-header">
+                <div>
+                    <h1 class="page-title">Club Notices & Campus Events</h1>
+                    <p class="page-subtitle">Stay updated on student club recruitment, workshops, hackathons, and campus announcements.</p>
+                </div>
+                <button id="openPostNoticeBtn" class="btn-primary-lg">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    <span>Post Notice</span>
+                </button>
+            </div>
+
+            <!-- Tab Filters -->
+            <div class="saved-tabs">
+                <button class="tab-btn active" data-type="all">All Notices</button>
+                <button class="tab-btn" data-type="recruitment">Club Recruitment</button>
+                <button class="tab-btn" data-type="events">Campus Events</button>
+                <button class="tab-btn" data-type="workshops">Workshops & Hackathons</button>
+            </div>
+
+            <!-- Notices Grid -->
+            <div id="noticesGrid" class="resources-grid">
+                <!-- Skeleton Shimmer Loader -->
+                <div class="skeleton-card"><div class="skeleton-badge"></div><div class="skeleton-line title"></div><div class="skeleton-line meta"></div><div class="skeleton-actions"></div></div>
+                <div class="skeleton-card"><div class="skeleton-badge"></div><div class="skeleton-line title"></div><div class="skeleton-line meta"></div><div class="skeleton-actions"></div></div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- --------------------------------------------------------------------
+       3. POST NOTICE MODAL
+       -------------------------------------------------------------------- -->
+    <div id="postNoticeModal" class="modal-backdrop" style="display: none;">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h2 class="modal-title">Post Club Notice or Campus Event</h2>
+                <button id="closeNoticeModalBtn" class="btn-icon" aria-label="Close modal">
+                    <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+
+            <form id="postNoticeForm" class="modal-form">
+                <div class="form-group">
+                    <label for="noticeTitle" class="form-label">Notice / Event Title *</label>
+                    <input type="text" id="noticeTitle" class="form-input" placeholder="e.g. Robotics Club Executive Recruitment 2026" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="noticeClub" class="form-label">Club / Organization Name *</label>
+                        <input type="text" id="noticeClub" class="form-input" placeholder="e.g. CS Society / Hackers Club" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="noticeCategory" class="form-label">Category *</label>
+                        <div class="select-wrapper">
+                            <select id="noticeCategory" class="select-field" required>
+                                <option value="recruitment">Club Recruitment</option>
+                                <option value="events">Campus Event</option>
+                                <option value="workshops">Workshop / Hackathon</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="noticeDescription" class="form-label">Details & Application Link *</label>
+                    <textarea id="noticeDescription" class="form-textarea" rows="4" placeholder="Event schedule, venue, eligibility, or registration Google Form link..." required></textarea>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" id="cancelNoticeBtn" class="btn-secondary">Cancel</button>
+                    <button type="submit" id="submitNoticeBtn" class="btn-primary">
+                        <span>Post Notice</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="toast-container" aria-live="polite"></div>
+
+</body>
+
+</html>

@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Saved Items & Bookmarks — Acadex</title>
+    <meta name="description" content="View and manage your saved academic study notes, past papers, and marketplace items on Acadex.">
+    <link rel="icon" type="image/svg+xml" href="../assets/logo/acadex-icon.svg">
+
+    <!-- Fonts & Shared Styles -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/dashboard.css">
+    <link rel="stylesheet" href="../css/resources.css">
+    <link rel="stylesheet" href="../css/saved.css">
+
+    <!-- Saved Items Logic Module -->
+    <script type="module" src="../js/saved.js"></script>
+</head>
+
+<body>
+
+    <!-- --------------------------------------------------------------------
+       1. TOP NAVIGATION HEADER
+       -------------------------------------------------------------------- -->
+    <header class="navbar">
+        <div class="nav-container">
+            <!-- Brand Logo -->
+            <a href="dashboard.html" class="nav-brand" aria-label="Acadex Home">
+                <img src="../assets/logo/acadex-icon.svg" alt="Acadex Logo" class="nav-logo-icon">
+                <span class="nav-brand-text">Acadex</span>
+            </a>
+
+            <!-- Navigation Links -->
+            <nav class="nav-links" aria-label="Main Navigation">
+                <a href="dashboard.html" class="nav-link">Dashboard</a>
+                <a href="resources.html" class="nav-link">Resources</a>
+                <a href="past-papers.html" class="nav-link">Past Papers</a>
+                <a href="marketplace.html" class="nav-link">Marketplace</a>
+                <a href="notices.html" class="nav-link">Notices</a>
+                <a href="saved.html" class="nav-link active" aria-current="page">Saved</a>
+            </nav>
+
+            <!-- Navigation Actions & Profile Dropdown -->
+            <div class="nav-actions">
+                <!-- Theme Toggle Button -->
+                <button id="themeToggle" class="btn-icon" aria-label="Switch theme" title="Toggle theme">
+                    <svg class="sun-icon" viewBox="0 0 24 24" aria-hidden="true">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                    <svg class="moon-icon" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                </button>
+
+                <!-- User Profile Menu -->
+                <div class="profile-dropdown-container">
+                    <button id="profileMenuBtn" class="profile-btn" aria-expanded="false" aria-label="User profile menu">
+                        <div id="userAvatar" class="user-avatar-sm">--</div>
+                        <span id="userNameLabel" class="user-name-text">Student</span>
+                        <svg class="dropdown-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </button>
+
+                    <!-- Dropdown Menu -->
+                    <div id="profileDropdown" class="profile-dropdown" role="menu">
+                        <div class="dropdown-header">
+                            <span id="dropdownName" class="dropdown-user-name">Student Name</span>
+                            <span id="dropdownEmail" class="dropdown-user-email">student@acadex.edu</span>
+                        </div>
+                        <div class="dropdown-divider"></div>
+                        <a href="dashboard.html" class="dropdown-item" role="menuitem">
+                            <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+                            <span>Dashboard</span>
+                        </a>
+                        <button id="logoutBtn" class="dropdown-item logout-item" role="menuitem">
+                            <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                            <span>Sign Out</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Mobile Drawer Toggle -->
+                <button id="mobileDrawerToggle" class="btn-icon mobile-drawer-btn" aria-label="Open navigation menu">
+                    <svg viewBox="0 0 24 24"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Mobile Drawer Menu -->
+    <div id="mobileDrawer" class="mobile-drawer">
+        <div class="drawer-header">
+            <span class="drawer-title">Navigation</span>
+            <button id="closeDrawerBtn" class="btn-icon" aria-label="Close navigation menu">
+                <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+        </div>
+        <div class="drawer-links">
+            <a href="dashboard.html" class="drawer-link">Dashboard</a>
+            <a href="resources.html" class="drawer-link">Resources</a>
+            <a href="past-papers.html" class="drawer-link">Past Papers</a>
+            <a href="marketplace.html" class="drawer-link">Marketplace</a>
+            <a href="notices.html" class="drawer-link">Notices</a>
+            <a href="saved.html" class="drawer-link active">Saved</a>
+        </div>
+    </div>
+    <div id="drawerOverlay" class="drawer-overlay"></div>
+
+    <!-- --------------------------------------------------------------------
+       2. MAIN SAVED ITEMS LAYOUT
+       -------------------------------------------------------------------- -->
+    <main class="resources-main">
+        <div class="resources-container">
+
+            <!-- Page Header -->
+            <div class="resources-header">
+                <div>
+                    <h1 class="page-title">Saved Items & Bookmarks</h1>
+                    <p class="page-subtitle">Your personal collection of bookmarked study notes, examination papers, and marketplace items.</p>
+                </div>
+            </div>
+
+            <!-- Tab Filters -->
+            <div class="saved-tabs">
+                <button class="tab-btn active" data-type="all">All Saved</button>
+                <button class="tab-btn" data-type="resource">Study Notes & Guides</button>
+                <button class="tab-btn" data-type="past_paper">Past Papers</button>
+                <button class="tab-btn" data-type="marketplace_item">Marketplace Items</button>
+            </div>
+
+            <!-- Saved Items Grid -->
+            <div id="savedGrid" class="resources-grid">
+                <!-- Skeleton Shimmer Loader -->
+                <div class="skeleton-card"><div class="skeleton-badge"></div><div class="skeleton-line title"></div><div class="skeleton-line meta"></div><div class="skeleton-actions"></div></div>
+                <div class="skeleton-card"><div class="skeleton-badge"></div><div class="skeleton-line title"></div><div class="skeleton-line meta"></div><div class="skeleton-actions"></div></div>
+            </div>
+
+            <!-- Empty State -->
+            <div id="emptyState" class="state-card" style="display: none;">
+                <svg class="state-icon" viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
+                <h3 class="state-title">No saved items yet</h3>
+                <p class="state-subtitle">Bookmark notes, past papers, or marketplace items to access them quickly from this page.</p>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="toast-container" aria-live="polite"></div>
+
+</body>
+
+</html>

@@ -1,9 +1,11 @@
 /* ==========================================================================
    ACADEX MARKETPLACE SERVICE (js/services/marketplace.js)
    CRUD operations for student marketplace listings (books, gear, devices).
+   Includes automatic Cloud Storage cleanup guards upon creation failure or deletion.
    ========================================================================== */
 
 import { auth, db } from "../firebase-config.js";
+import { deleteStorageFile } from "./storage.js";
 import {
     collection,
     doc,
@@ -26,12 +28,12 @@ const MARKETPLACE_COLLECTION = "marketplace_items";
  * @param {Object} options 
  * @returns {Promise<Array<Object>>}
  */
-export async function fetchMarketplaceItems({ category, status = "available", limitCount = 10 } = {}) {
+export async function fetchMarketplaceItems({ category, status = "available", limitCount = 20 } = {}) {
     try {
         const colRef = collection(db, MARKETPLACE_COLLECTION);
         const queryConstraints = [where("status", "==", status)];
 
-        if (category) {
+        if (category && category !== "all") {
             queryConstraints.push(where("category", "==", category));
         }
 
@@ -75,6 +77,7 @@ export async function fetchMarketplaceItemById(itemId) {
 
 /**
  * Creates a new marketplace listing (excludes seller email for user privacy).
+ * Automatically cleans up uploaded Storage image if Firestore creation fails!
  * @param {Object} itemData 
  * @returns {Promise<string>} Document ID
  */
@@ -88,26 +91,38 @@ export async function createMarketplaceItem(itemData) {
         throw new Error("Title and price are required for marketplace listings.");
     }
 
+    const payload = {
+        title: itemData.title.trim(),
+        description: (itemData.description || "").trim(),
+        category: itemData.category || "study",
+        price: Number(itemData.price) || 0,
+        condition: itemData.condition || "good",
+        contactNumber: (itemData.contactNumber || "").trim(),
+        imageURL: itemData.imageURL || "",
+        storagePath: itemData.storagePath || "",
+        sellerUid: user.uid,
+        sellerName: itemData.sellerName || user.displayName || "Student",
+        status: "available",
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+    };
+
     try {
         const colRef = collection(db, MARKETPLACE_COLLECTION);
-        const payload = {
-            title: itemData.title.trim(),
-            description: (itemData.description || "").trim(),
-            category: itemData.category || "textbook",
-            price: Number(itemData.price) || 0,
-            condition: itemData.condition || "good",
-            images: Array.isArray(itemData.images) ? itemData.images : [],
-            sellerUid: user.uid,
-            sellerName: itemData.sellerName || user.displayName || "Student",
-            status: "available",
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp()
-        };
-
         const docRef = await addDoc(colRef, payload);
         return docRef.id;
     } catch (error) {
-        console.error("Error creating marketplace item:", error);
+        console.error("Firestore Marketplace Creation Error! Initiating Storage cleanup guard...", error);
+        
+        // Automatic Storage Cleanup if Firestore write fails after Storage upload
+        if (itemData.storagePath) {
+            try {
+                await deleteStorageFile(itemData.storagePath);
+                console.log("Cleanup Guard: Orphaned Storage image successfully deleted.");
+            } catch (cleanupErr) {
+                console.error("Cleanup Guard Error deleting storage image:", cleanupErr);
+            }
+        }
         throw error;
     }
 }
@@ -122,7 +137,7 @@ export async function updateMarketplaceItem(itemId, updateFields = {}) {
     if (!user) throw new Error("Authentication required to update item.");
 
     // Strip protected immutable fields
-    const { sellerUid, createdAt, id, ...allowedFields } = updateFields;
+    const { sellerUid, createdAt, id, storagePath, ...allowedFields } = updateFields;
 
     try {
         const docRef = doc(db, MARKETPLACE_COLLECTION, itemId);
@@ -137,7 +152,7 @@ export async function updateMarketplaceItem(itemId, updateFields = {}) {
 }
 
 /**
- * Deletes a marketplace listing document.
+ * Deletes a marketplace listing document AND its associated Storage image.
  * @param {string} itemId 
  */
 export async function deleteMarketplaceItem(itemId) {
@@ -145,8 +160,15 @@ export async function deleteMarketplaceItem(itemId) {
     if (!user) throw new Error("Authentication required to delete item.");
 
     try {
+        // Fetch item document first to retrieve storagePath
+        const item = await fetchMarketplaceItemById(itemId);
+        if (item && item.storagePath) {
+            await deleteStorageFile(item.storagePath);
+        }
+
         const docRef = doc(db, MARKETPLACE_COLLECTION, itemId);
         await deleteDoc(docRef);
+        console.log(`Marketplace Item ${itemId} and storage image deleted successfully.`);
     } catch (error) {
         console.error(`Error deleting marketplace item ${itemId}:`, error);
         throw error;

@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Marketplace — Acadex</title>
+    <meta name="description" content="Buy and sell textbooks, drawing gear, lab coats, and dorm furniture on Acadex Student Marketplace.">
+    <link rel="icon" type="image/svg+xml" href="../assets/logo/acadex-icon.svg">
+
+    <!-- Fonts & Shared Styles -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/dashboard.css">
+    <link rel="stylesheet" href="../css/resources.css">
+    <link rel="stylesheet" href="../css/marketplace.css">
+
+    <!-- Marketplace Logic Module -->
+    <script type="module" src="../js/marketplace.js"></script>
+</head>
+
+<body>
+
+    <!-- --------------------------------------------------------------------
+       1. TOP NAVIGATION HEADER
+       -------------------------------------------------------------------- -->
+    <header class="navbar">
+        <div class="nav-container">
+            <!-- Brand Logo -->
+            <a href="dashboard.html" class="nav-brand" aria-label="Acadex Home">
+                <img src="../assets/logo/acadex-icon.svg" alt="Acadex Logo" class="nav-logo-icon">
+                <span class="nav-brand-text">Acadex</span>
+            </a>
+
+            <!-- Navigation Links -->
+            <nav class="nav-links" aria-label="Main Navigation">
+                <a href="dashboard.html" class="nav-link">Dashboard</a>
+                <a href="resources.html" class="nav-link">Resources</a>
+                <a href="past-papers.html" class="nav-link">Past Papers</a>
+                <a href="marketplace.html" class="nav-link active" aria-current="page">Marketplace</a>
+                <a href="notices.html" class="nav-link">Notices</a>
+                <a href="saved.html" class="nav-link">Saved</a>
+            </nav>
+
+            <!-- Navigation Actions & Profile Dropdown -->
+            <div class="nav-actions">
+                <!-- Theme Toggle Button -->
+                <button id="themeToggle" class="btn-icon" aria-label="Switch theme" title="Toggle theme">
+                    <svg class="sun-icon" viewBox="0 0 24 24" aria-hidden="true">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                    <svg class="moon-icon" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                </button>
+
+                <!-- User Profile Menu -->
+                <div class="profile-dropdown-container">
+                    <button id="profileMenuBtn" class="profile-btn" aria-expanded="false" aria-label="User profile menu">
+                        <div id="userAvatar" class="user-avatar-sm">--</div>
+                        <span id="userNameLabel" class="user-name-text">Student</span>
+                        <svg class="dropdown-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </button>
+
+                    <!-- Dropdown Menu -->
+                    <div id="profileDropdown" class="profile-dropdown" role="menu">
+                        <div class="dropdown-header">
+                            <span id="dropdownName" class="dropdown-user-name">Student Name</span>
+                            <span id="dropdownEmail" class="dropdown-user-email">student@acadex.edu</span>
+                        </div>
+                        <div class="dropdown-divider"></div>
+                        <a href="dashboard.html" class="dropdown-item" role="menuitem">
+                            <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+                            <span>Dashboard</span>
+                        </a>
+                        <a href="saved.html" class="dropdown-item" role="menuitem">
+                            <svg viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
+                            <span>Saved Items</span>
+                        </a>
+                        <button id="logoutBtn" class="dropdown-item logout-item" role="menuitem">
+                            <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                            <span>Sign Out</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Mobile Drawer Toggle -->
+                <button id="mobileDrawerToggle" class="btn-icon mobile-drawer-btn" aria-label="Open navigation menu">
+                    <svg viewBox="0 0 24 24"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Mobile Drawer Menu -->
+    <div id="mobileDrawer" class="mobile-drawer">
+        <div class="drawer-header">
+            <span class="drawer-title">Navigation</span>
+            <button id="closeDrawerBtn" class="btn-icon" aria-label="Close navigation menu">
+                <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+        </div>
+        <div class="drawer-links">
+            <a href="dashboard.html" class="drawer-link">Dashboard</a>
+            <a href="resources.html" class="drawer-link">Resources</a>
+            <a href="past-papers.html" class="drawer-link">Past Papers</a>
+            <a href="marketplace.html" class="drawer-link active">Marketplace</a>
+            <a href="notices.html" class="drawer-link">Notices</a>
+            <a href="saved.html" class="drawer-link">Saved</a>
+        </div>
+    </div>
+    <div id="drawerOverlay" class="drawer-overlay"></div>
+
+    <!-- --------------------------------------------------------------------
+       2. MAIN MARKETPLACE LAYOUT
+       -------------------------------------------------------------------- -->
+    <main class="resources-main">
+        <div class="resources-container">
+
+            <!-- Page Header & Action -->
+            <div class="resources-header">
+                <div>
+                    <h1 class="page-title">Student Marketplace</h1>
+                    <p class="page-subtitle">Buy and sell textbooks, drawing gear, aprons, lab coats, and dorm furniture directly with fellow students.</p>
+                </div>
+                <button id="openUploadModalBtn" class="btn-primary-lg">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    <span>List an Item</span>
+                </button>
+            </div>
+
+            <!-- Filter & Search Bar -->
+            <div class="filter-card">
+                <div class="search-box">
+                    <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    <input type="text" id="searchInput" class="search-input" placeholder="Search for books, gear, lab coats, furniture...">
+                </div>
+
+                <div class="filter-selects-row">
+                    <div class="select-wrapper">
+                        <select id="categoryFilter" class="select-field">
+                            <option value="all">All Categories</option>
+                            <option value="study">Study Related (Books, Aprons, Gear)</option>
+                            <option value="furniture">Dorm Furniture</option>
+                            <option value="electronics">Electronics & Devices</option>
+                            <option value="others">Others</option>
+                        </select>
+                    </div>
+
+                    <div class="select-wrapper">
+                        <select id="conditionFilter" class="select-field">
+                            <option value="all">All Conditions</option>
+                            <option value="new">Brand New</option>
+                            <option value="like-new">Like New</option>
+                            <option value="good">Good</option>
+                            <option value="fair">Fair</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Marketplace Grid / Feed -->
+            <div id="marketplaceGrid" class="resources-grid">
+                <!-- Skeleton Shimmer Loader -->
+                <div class="skeleton-card"><div class="skeleton-badge"></div><div class="skeleton-line title"></div><div class="skeleton-line meta"></div><div class="skeleton-actions"></div></div>
+                <div class="skeleton-card"><div class="skeleton-badge"></div><div class="skeleton-line title"></div><div class="skeleton-line meta"></div><div class="skeleton-actions"></div></div>
+                <div class="skeleton-card"><div class="skeleton-badge"></div><div class="skeleton-line title"></div><div class="skeleton-line meta"></div><div class="skeleton-actions"></div></div>
+            </div>
+
+            <!-- Empty State -->
+            <div id="emptyState" class="state-card" style="display: none;">
+                <svg class="state-icon" viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+                <h3 class="state-title">No items found</h3>
+                <p class="state-subtitle">No marketplace listings match your filter criteria. Be the first to list an item!</p>
+            </div>
+
+            <!-- Error State -->
+            <div id="errorState" class="state-card" style="display: none;">
+                <svg class="state-icon error-color" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                <h3 class="state-title">Unable to load marketplace</h3>
+                <p class="state-subtitle">We couldn't connect to Firestore. Please check your connection and try again.</p>
+                <button id="retryFetchBtn" class="btn-secondary" style="margin-top: 12px;">Retry</button>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- --------------------------------------------------------------------
+       3. LIST AN ITEM MODAL
+       -------------------------------------------------------------------- -->
+    <div id="uploadItemModal" class="modal-backdrop" style="display: none;">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h2 class="modal-title">List an Item for Sale</h2>
+                <button id="closeUploadModalBtn" class="btn-icon" aria-label="Close modal">
+                    <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+
+            <form id="uploadItemForm" class="modal-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="itemTitle" class="form-label">Item Name *</label>
+                        <input type="text" id="itemTitle" class="form-input" placeholder="e.g. Engineering Drawing Board & Apron Set" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="itemPrice" class="form-label">Price ($ / Rs.) *</label>
+                        <input type="number" id="itemPrice" class="form-input" placeholder="e.g. 25" min="0" step="any" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="itemCategory" class="form-label">Category *</label>
+                        <div class="select-wrapper">
+                            <select id="itemCategory" class="select-field" required>
+                                <option value="study">Study Related (Books, Aprons, Gear)</option>
+                                <option value="furniture">Dorm Furniture</option>
+                                <option value="electronics">Electronics & Devices</option>
+                                <option value="others">Others</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="itemCondition" class="form-label">Condition *</label>
+                        <div class="select-wrapper">
+                            <select id="itemCondition" class="select-field" required>
+                                <option value="like-new">Like New</option>
+                                <option value="new">Brand New</option>
+                                <option value="good">Good</option>
+                                <option value="fair">Fair</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="contactNumber" class="form-label">Contact Phone / WhatsApp *</label>
+                    <input type="text" id="contactNumber" class="form-input" placeholder="e.g. +1 555-0199 or WhatsApp number" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="itemDescription" class="form-label">Description (Optional)</label>
+                    <textarea id="itemDescription" class="form-textarea" rows="3" placeholder="Condition details, pickup location, or included accessories..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="fileInput" class="form-label">Item Picture (PNG, JPG - Max 10MB) *</label>
+                    <input type="file" id="fileInput" class="file-input-field" accept="image/*" required>
+                    <span id="fileInputHint" class="input-hint">Clear photo of the item helps sell faster.</span>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" id="cancelUploadBtn" class="btn-secondary">Cancel</button>
+                    <button type="submit" id="submitUploadBtn" class="btn-primary">
+                        <span id="submitUploadLabel">Post Listing</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- --------------------------------------------------------------------
+       4. CONTACT SELLER MODAL
+       -------------------------------------------------------------------- -->
+    <div id="contactSellerModal" class="modal-backdrop" style="display: none;">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h2 class="modal-title">Contact Seller</h2>
+                <button id="closeContactModalBtn" class="btn-icon" aria-label="Close modal">
+                    <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+
+            <div class="details-body">
+                <h3 id="sellerItemTitle" class="details-title">--</h3>
+                <div id="sellerPriceTag" class="price-pill-lg">$0.00</div>
+
+                <div class="details-info-grid" style="margin-top: 16px;">
+                    <div class="info-item">
+                        <span class="info-label">Seller Name</span>
+                        <span id="sellerNameVal" class="info-val">--</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Contact Number</span>
+                        <span id="sellerPhoneVal" class="info-val" style="color: var(--primary);">--</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <a id="sellerCallBtn" href="#" class="btn-primary" style="width: 100%; text-align: center; text-decoration: none;">Call or Message Seller</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="toast-container" aria-live="polite"></div>
+
+</body>
+
+</html>
