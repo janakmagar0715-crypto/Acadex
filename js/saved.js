@@ -7,6 +7,7 @@
 import { auth, checkUserProfile } from "./firebase-config.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
 import { fetchUserBookmarks, removeBookmark } from "./services/bookmarks.js";
+import { escapeHtml } from "./utils.js";
 
 document.addEventListener("DOMContentLoaded", () => {
 
@@ -235,20 +236,20 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             return `
-                <div class="resource-card" data-id="${item.id}">
+                <div class="resource-card" data-id="${escapeHtml(item.id)}">
                     <div>
                         <div class="resource-card-header">
-                            <span class="resource-type-badge ${badgeClass}">${typeBadge}</span>
+                            <span class="resource-type-badge ${badgeClass}">${escapeHtml(typeBadge)}</span>
                         </div>
-                        <h3 class="resource-title" style="margin-top: 10px;">${item.title || 'Saved Item'}</h3>
-                        <div class="resource-meta-text">${item.subject || ''} • ${item.category || ''}</div>
+                        <h3 class="resource-title" style="margin-top: 10px;">${escapeHtml(item.title || 'Saved Item')}</h3>
+                        <div class="resource-meta-text">${escapeHtml(item.subject || '')} • ${escapeHtml(item.category || '')}</div>
                     </div>
 
                     <div class="resource-card-actions">
-                        <button class="btn-icon-secondary remove-bookmark-btn" data-type="${item.targetType}" data-target-id="${item.targetId}" aria-label="Remove bookmark" title="Remove bookmark">
+                        <button class="btn-icon-secondary remove-bookmark-btn" data-type="${escapeHtml(item.targetType)}" data-target-id="${escapeHtml(item.targetId)}" aria-label="Remove bookmark" title="Remove bookmark">
                             <svg viewBox="0 0 24 24" style="stroke: var(--error); fill: rgba(239,68,68,0.1);"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                         </button>
-                        <a href="${targetPage}" class="btn-primary" style="padding: 6px 14px; font-size: 13px; text-decoration: none;">View in Page</a>
+                        <a href="${escapeHtml(targetPage)}" class="btn-primary" style="padding: 6px 14px; font-size: 13px; text-decoration: none;">View in Page</a>
                     </div>
                 </div>
             `;

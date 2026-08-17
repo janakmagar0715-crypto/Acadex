@@ -14,6 +14,7 @@ import {
     orderBy, 
     serverTimestamp 
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+import { escapeHtml } from "./utils.js";
 
 document.addEventListener("DOMContentLoaded", () => {
 
@@ -242,17 +243,17 @@ document.addEventListener("DOMContentLoaded", () => {
             else if (item.category === "workshops") badgeClass = "badge-project";
 
             return `
-                <div class="resource-card" data-id="${item.id}">
+                <div class="resource-card" data-id="${escapeHtml(item.id)}">
                     <div>
                         <div class="resource-card-header">
-                            <span class="resource-type-badge ${badgeClass}">${(item.category || "Notice").toUpperCase()}</span>
-                            <span class="notice-club-badge">${item.clubName || "Student Club"}</span>
+                            <span class="resource-type-badge ${badgeClass}">${escapeHtml((item.category || "Notice").toUpperCase())}</span>
+                            <span class="notice-club-badge">${escapeHtml(item.clubName || "Student Club")}</span>
                         </div>
-                        <h3 class="resource-title" style="margin-top: 10px;">${item.title}</h3>
-                        <p class="notice-desc-text">${item.description}</p>
+                        <h3 class="resource-title" style="margin-top: 10px;">${escapeHtml(item.title)}</h3>
+                        <p class="notice-desc-text">${escapeHtml(item.description)}</p>
                     </div>
                     <div class="resource-card-actions">
-                        <span class="resource-meta-text">Posted by ${item.authorName || 'Student'}</span>
+                        <span class="resource-meta-text">Posted by ${escapeHtml(item.authorName || 'Student')}</span>
                     </div>
                 </div>
             `;

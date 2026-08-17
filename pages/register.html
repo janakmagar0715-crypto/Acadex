@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Create your Acadex account - Join your student academic platform to share and discover notes, past papers, and marketplace items.">
+
+    <title>Create Account | Acadex</title>
+
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Design System & Page Styles -->
+    <link rel="stylesheet" href="../css/style.css">
+    
+    <!-- Application Logic (ES Module) -->
+    <script type="module" src="../js/register.js"></script>
+</head>
+
+<body>
+
+    <!-- Ambient Background Effects -->
+    <div class="background-effects" aria-hidden="true">
+        <div class="grid-pattern"></div>
+        <div class="ambient-orb orb-primary"></div>
+        <div class="ambient-orb orb-lime"></div>
+    </div>
+
+    <!-- Floating Theme Toggle Button -->
+    <button id="themeToggle" class="theme-toggle" aria-label="Toggle color theme" title="Toggle theme">
+        <!-- Moon Icon (Visible in Light Mode) -->
+        <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+        <!-- Sun Icon (Visible in Dark Mode) -->
+        <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+    </button>
+
+    <!-- Main Authentication Layout -->
+    <main class="auth-container">
+
+        <!-- Left Side: Brand Introduction -->
+        <section class="auth-brand">
+
+            <a href="../index.html" class="brand-logo-wrapper" aria-label="Acadex Home">
+                <img src="../assets/logo/acadex-icon.svg" alt="Acadex Logo" class="brand-logo" width="80" height="80">
+            </a>
+
+            <h1 class="brand-headline">
+                Your academic world,
+                <span class="highlight-blue">all in</span>
+                <span class="highlight-lime">one place.</span>
+            </h1>
+
+            <p class="brand-description">
+                Discover notes, past papers, assignments and useful resources shared by students.
+            </p>
+
+            <!-- Feature Pills with Clean SVG Iconography -->
+            <div class="brand-features" role="list">
+                
+                <div class="feature-pill" role="listitem">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                    </svg>
+                    <span>Study smarter</span>
+                </div>
+
+                <div class="feature-pill" role="listitem">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <circle cx="18" cy="5" r="3"></circle>
+                        <circle cx="6" cy="12" r="3"></circle>
+                        <circle cx="18" cy="19" r="3"></circle>
+                        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                        <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                    </svg>
+                    <span>Share knowledge</span>
+                </div>
+
+                <div class="feature-pill" role="listitem">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                        <polyline points="17 6 23 6 23 12"></polyline>
+                    </svg>
+                    <span>Grow together</span>
+                </div>
+
+            </div>
+
+        </section>
+
+        <!-- Right Side: Registration Card -->
+        <section class="auth-section">
+
+            <div class="auth-card">
+
+                <div class="auth-header">
+                    <span class="eyebrow">GET STARTED</span>
+                    <h2 class="auth-title">Create your account</h2>
+                    <p class="auth-subtitle">Join the student community on Acadex.</p>
+                </div>
+
+                <!-- Google Sign-In Button -->
+                <button id="googleLogin" class="btn-google" type="button">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
+                        <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.26v3.15C3.26 21.3 7.37 24 12 24z"/>
+                        <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.26C.46 8.17 0 9.99 0 12s.46 3.83 1.26 5.42l4.02-3.15z"/>
+                        <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.37 0 3.26 2.7 1.26 6.58l4.02 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+                    </svg>
+                    <span>Sign up with Google</span>
+                </button>
+
+                <div class="divider">
+                    <span>OR</span>
+                </div>
+
+                <!-- Registration Form -->
+                <form id="registerForm" novalidate>
+
+                    <div class="form-group">
+                        <label for="fullName" class="form-label">Full Name</label>
+                        <input 
+                            id="fullName" 
+                            type="text" 
+                            class="input-field" 
+                            placeholder="John Doe" 
+                            required 
+                            autocomplete="name"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email" class="form-label">Email address</label>
+                        <input 
+                            id="email" 
+                            type="email" 
+                            class="input-field" 
+                            placeholder="you@example.com" 
+                            required 
+                            autocomplete="email"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password" class="form-label">Password</label>
+                        <div class="input-wrapper">
+                            <input 
+                                id="password" 
+                                type="password" 
+                                class="input-field" 
+                                placeholder="Create a password (min. 6 chars)" 
+                                required 
+                                autocomplete="new-password"
+                            >
+                            <button 
+                                type="button" 
+                                id="togglePassword" 
+                                class="password-toggle-btn" 
+                                aria-label="Show password" 
+                                title="Toggle password visibility"
+                            >
+                                <svg class="icon-eye" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                                <svg class="icon-eye-off" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                                    <line x1="1" y1="1" x2="23" y2="23"></line>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirmPassword" class="form-label">Confirm Password</label>
+                        <div class="input-wrapper">
+                            <input 
+                                id="confirmPassword" 
+                                type="password" 
+                                class="input-field" 
+                                placeholder="Confirm your password" 
+                                required 
+                                autocomplete="new-password"
+                            >
+                            <button 
+                                type="button" 
+                                id="toggleConfirmPassword" 
+                                class="password-toggle-btn" 
+                                aria-label="Show password" 
+                                title="Toggle password visibility"
+                            >
+                                <svg class="icon-eye" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                                <svg class="icon-eye-off" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                                    <line x1="1" y1="1" x2="23" y2="23"></line>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="submitRegisterBtn" class="btn-primary">
+                        <span>Create Account</span>
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                            <polyline points="12 5 19 12 12 19"></polyline>
+                        </svg>
+                    </button>
+
+                </form>
+
+                <p class="register-text">
+                    Already have an account?
+                    <a href="login.html" class="register-link">Sign in</a>
+                </p>
+
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Toast Notification Container for Non-Blocking User Feedback -->
+    <div id="toastContainer" class="toast-container" aria-live="polite"></div>
+
+</body>
+
+</html>

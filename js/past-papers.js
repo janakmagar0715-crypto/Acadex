@@ -9,6 +9,7 @@ import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/
 import { fetchPastPapers, createPastPaper, deletePastPaper } from "./services/past-papers.js";
 import { uploadResourceFile } from "./services/storage.js";
 import { fetchUserBookmarks, addBookmark, removeBookmark } from "./services/bookmarks.js";
+import { escapeHtml } from "./utils.js";
 
 document.addEventListener("DOMContentLoaded", () => {
 
@@ -294,27 +295,27 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             return `
-                <div class="resource-card" data-id="${item.id}">
+                <div class="resource-card" data-id="${escapeHtml(item.id)}">
                     <div>
                         <div class="resource-card-header">
                             <div style="display:flex; align-items:center; gap:8px;">
                                 <span class="resource-type-badge ${badgeClass}">${badgeText}</span>
-                                ${item.courseCode ? `<span class="course-code-pill">${item.courseCode}</span>` : ''}
+                                ${item.courseCode ? `<span class="course-code-pill">${escapeHtml(item.courseCode)}</span>` : ''}
                             </div>
-                            ${isOwner ? `<button class="btn-icon-secondary delete-btn" data-id="${item.id}" aria-label="Delete past paper" title="Delete"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>` : ''}
+                            ${isOwner ? `<button class="btn-icon-secondary delete-btn" data-id="${escapeHtml(item.id)}" aria-label="Delete past paper" title="Delete"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>` : ''}
                         </div>
-                        <h3 class="resource-title" style="margin-top: 10px;">${item.title}</h3>
-                        <div class="resource-meta-text">${item.subject} • ${item.department || 'General'} (${item.year || '2024'})</div>
-                        <div class="resource-meta-text" style="font-size: 11.5px; margin-top: 4px;">By ${item.uploaderName || 'Student'} • ${formatFileSize(item.fileSize)}</div>
+                        <h3 class="resource-title" style="margin-top: 10px;">${escapeHtml(item.title)}</h3>
+                        <div class="resource-meta-text">${escapeHtml(item.subject)} • ${escapeHtml(item.department || 'General')} (${escapeHtml(item.year || '2024')})</div>
+                        <div class="resource-meta-text" style="font-size: 11.5px; margin-top: 4px;">By ${escapeHtml(item.uploaderName || 'Student')} • ${formatFileSize(item.fileSize)}</div>
                     </div>
 
                     <div class="resource-card-actions">
-                        <button class="btn-icon-secondary bookmark-btn ${isBookmarked ? 'bookmarked' : ''}" data-id="${item.id}" aria-label="Bookmark past paper">
+                        <button class="btn-icon-secondary bookmark-btn ${isBookmarked ? 'bookmarked' : ''}" data-id="${escapeHtml(item.id)}" aria-label="Bookmark past paper">
                             <svg viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
                         </button>
                         <div class="card-btn-group">
-                            <button class="btn-secondary view-details-btn" data-id="${item.id}" style="padding: 6px 12px; font-size: 13px;">View</button>
-                            <a href="${item.fileURL}" target="_blank" download class="btn-primary" style="padding: 6px 14px; font-size: 13px; text-decoration: none;">Download</a>
+                            <button class="btn-secondary view-details-btn" data-id="${escapeHtml(item.id)}" style="padding: 6px 12px; font-size: 13px;">View</button>
+                            <a href="${escapeHtml(item.fileURL)}" target="_blank" download class="btn-primary" style="padding: 6px 14px; font-size: 13px; text-decoration: none;">Download</a>
                         </div>
                     </div>
                 </div>
