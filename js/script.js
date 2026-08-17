@@ -244,7 +244,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (isAuthenticating) return;
 
             const emailVal = emailInput ? emailInput.value.trim() : "";
-            const passVal = passwordInput ? passwordInput.value.trim() : "";
+            const passVal = passwordInput ? passwordInput.value : "";
 
             if (!emailVal || !passVal) {
                 showToast("Please enter your email and password.", false);
