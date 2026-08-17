@@ -8,9 +8,11 @@ import {
     signOut, 
     onAuthStateChanged 
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+import { fetchResources } from "./services/resources.js";
+import { fetchUserBookmarks, addBookmark, removeBookmark } from "./services/bookmarks.js";
 
 /* ----------------------------------------------------------------------
-   1. DATA LAYER (Decoupled Demo Data for future Firestore integration)
+   1. DATA LAYER (Live Firestore Integration with Fallbacks)
    ---------------------------------------------------------------------- */
 const overviewStatsData = {
     resources: 128,
@@ -19,49 +21,10 @@ const overviewStatsData = {
     uploads: 8
 };
 
-const recentResourcesData = [
-    {
-        id: "res-1",
-        type: "Notes",
-        badgeClass: "",
-        title: "Data Structures & Algorithms Notes",
-        subject: "CS201",
-        year: "2024",
-        uploader: "Alex M."
-    },
-    {
-        id: "res-2",
-        type: "Exam Paper",
-        badgeClass: "badge-paper",
-        title: "Database Management Midterm Paper",
-        subject: "CS302",
-        year: "2023",
-        uploader: "Sarah K."
-    },
-    {
-        id: "res-3",
-        type: "Assignment",
-        badgeClass: "",
-        title: "Operating Systems Process Control Solution",
-        subject: "CS305",
-        year: "2024",
-        uploader: "David P."
-    },
-    {
-        id: "res-4",
-        type: "Notes",
-        badgeClass: "",
-        title: "Computer Networks Protocols Summary",
-        subject: "CS401",
-        year: "2024",
-        uploader: "Emma W."
-    }
-];
-
 const continueStudyingData = [
-    { id: "course-1", subject: "Data Structures", percent: 65 },
-    { id: "course-2", subject: "Database Management", percent: 40 },
-    { id: "course-3", subject: "Computer Networks", percent: 80 }
+    { subject: "Data Structures & Algorithms", percent: 75 },
+    { subject: "Database Management Systems", percent: 45 },
+    { subject: "Operating Systems", percent: 60 }
 ];
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -204,36 +167,108 @@ document.addEventListener("DOMContentLoaded", () => {
         if (statRes) statRes.textContent = overviewStatsData.resources;
         if (statPap) statPap.textContent = overviewStatsData.pastPapers;
         if (statSav) statSav.textContent = overviewStatsData.savedItems;
+    /**
+     * Renders overview stats, recent academic resources, and study progress.
+     */
+    async function renderDashboardContent(user) {
+        // Render Stat Cards
+        const statRes = document.getElementById("statResources");
+        const statPap = document.getElementById("statPapers");
+        const statSav = document.getElementById("statSaved");
+        const statUpl = document.getElementById("statUploads");
+
+        if (statRes) statRes.textContent = overviewStatsData.resources;
+        if (statPap) statPap.textContent = overviewStatsData.pastPapers;
+        if (statSav) statSav.textContent = overviewStatsData.savedItems;
         if (statUpl) statUpl.textContent = overviewStatsData.uploads;
 
-        // Render Recent Resources
+        // Render Recent Resources from Firestore
         const resourcesList = document.getElementById("resourcesList");
         if (resourcesList) {
-            resourcesList.innerHTML = recentResourcesData.map(item => `
-                <div class="resource-card">
-                    <div class="resource-left">
-                        <span class="resource-type-badge ${item.badgeClass}">${item.type}</span>
-                        <div class="resource-details">
-                            <h3 class="resource-title">${item.title}</h3>
-                            <span class="resource-meta">${item.subject} • ${item.year} • Uploaded by ${item.uploader}</span>
-                        </div>
-                    </div>
-                    <div class="resource-actions">
-                        <button class="btn-icon-secondary bookmark-btn" aria-label="Save resource" title="Bookmark">
-                            <svg viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
-                        </button>
-                        <button class="btn-sm-primary view-btn">View</button>
-                    </div>
-                </div>
-            `).join("");
+            try {
+                const liveResources = await fetchResources({ limitCount: 4 });
+                
+                let userBookmarks = [];
+                if (user) {
+                    try { userBookmarks = await fetchUserBookmarks(user.uid); } catch (e) {}
+                }
+                const bookmarkSet = new Set(userBookmarks.map(b => b.targetId));
 
-            // Add action handlers for demo resource buttons
-            resourcesList.querySelectorAll(".bookmark-btn").forEach(btn => {
-                btn.addEventListener("click", () => showToast("Resource saved to your bookmarks!"));
-            });
-            resourcesList.querySelectorAll(".view-btn").forEach(btn => {
-                btn.addEventListener("click", () => showToast("Opening resource preview..."));
-            });
+                if (liveResources.length > 0) {
+                    resourcesList.innerHTML = liveResources.map(item => {
+                        const isSaved = bookmarkSet.has(item.id);
+                        let badgeClass = "";
+                        if (item.category === "assignment") badgeClass = "badge-paper";
+
+                        return `
+                            <div class="resource-card" data-id="${item.id}">
+                                <div class="resource-left">
+                                    <span class="resource-type-badge ${badgeClass}">${(item.category || "Notes").toUpperCase()}</span>
+                                    <div class="resource-details">
+                                        <h3 class="resource-title">${item.title}</h3>
+                                        <span class="resource-meta">${item.subject} • ${item.department || 'General'} • By ${item.uploaderName || 'Student'}</span>
+                                    </div>
+                                </div>
+                                <div class="resource-actions">
+                                    <button class="btn-icon-secondary bookmark-btn ${isSaved ? 'bookmarked' : ''}" data-id="${item.id}" aria-label="Save resource" title="Bookmark">
+                                        <svg viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
+                                    </button>
+                                    <a href="resources.html" class="btn-sm-primary view-btn" style="text-decoration: none;">View</a>
+                                </div>
+                            </div>
+                        `;
+                    }).join("");
+
+                    // Attach real bookmark action handlers
+                    resourcesList.querySelectorAll(".bookmark-btn").forEach(btn => {
+                        btn.addEventListener("click", async (e) => {
+                            e.stopPropagation();
+                            if (!user) return;
+                            const resId = btn.getAttribute("data-id");
+                            const isSaved = bookmarkSet.has(resId);
+                            const item = liveResources.find(r => r.id === resId);
+                            
+                            try {
+                                if (isSaved) {
+                                    await removeBookmark("resource", resId);
+                                    bookmarkSet.delete(resId);
+                                    btn.classList.remove("bookmarked");
+                                    showToast("Resource removed from bookmarks.");
+                                } else {
+                                    await addBookmark({
+                                        targetId: resId,
+                                        targetType: "resource",
+                                        title: item ? item.title : "Resource",
+                                        subject: item ? item.subject : "",
+                                        category: item ? item.category : "notes"
+                                    });
+                                    bookmarkSet.add(resId);
+                                    btn.classList.add("bookmarked");
+                                    showToast("Resource saved to your bookmarks!", true);
+                                }
+                            } catch (err) {
+                                console.error("Dashboard bookmark toggle error:", err);
+                                showToast("Could not update bookmark.", false);
+                            }
+                        });
+                    });
+
+                } else {
+                    resourcesList.innerHTML = `
+                        <div class="resource-card" style="justify-content: center; text-align: center; padding: 24px;">
+                            <span class="resource-meta">No academic resources uploaded yet. <a href="resources.html" style="color: var(--primary); font-weight: 700; text-decoration: none;">Upload the first resource &rarr;</a></span>
+                        </div>
+                    `;
+                }
+
+            } catch (error) {
+                console.error("Dashboard Firestore Resource Fetch Error:", error);
+                resourcesList.innerHTML = `
+                    <div class="resource-card" style="justify-content: center; text-align: center; padding: 20px;">
+                        <span class="resource-meta">Unable to load recent resources feed.</span>
+                    </div>
+                `;
+            }
         }
 
         // Render Continue Studying Progress Cards
@@ -272,7 +307,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 // Render User Profile & Dashboard using Auth and Firestore data
                 const profileData = profileResult.data || {};
                 renderUser(user, profileData);
-                renderDashboardContent();
+                await renderDashboardContent(user);
             } else {
                 console.log("Dashboard: No active user, redirecting to login...");
                 window.location.href = "login.html";

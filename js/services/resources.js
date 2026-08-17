@@ -1,9 +1,11 @@
 /* ==========================================================================
    ACADEX SHARED RESOURCES SERVICE (js/services/resources.js)
    CRUD operations for shared notes, assignments, projects, and guides.
+   Includes automatic Storage cleanup guards upon creation failure or deletion.
    ========================================================================== */
 
 import { auth, db } from "../firebase-config.js";
+import { deleteStorageFile } from "./storage.js";
 import {
     collection,
     doc,
@@ -26,15 +28,15 @@ const RESOURCES_COLLECTION = "resources";
  * @param {Object} options - Filter parameters
  * @returns {Promise<Array<Object>>}
  */
-export async function fetchResources({ category, department, limitCount = 10 } = {}) {
+export async function fetchResources({ category, department, limitCount = 12 } = {}) {
     try {
         const colRef = collection(db, RESOURCES_COLLECTION);
         const queryConstraints = [where("status", "==", "active")];
 
-        if (category) {
+        if (category && category !== "all") {
             queryConstraints.push(where("category", "==", category));
         }
-        if (department) {
+        if (department && department !== "all") {
             queryConstraints.push(where("department", "==", department));
         }
 
@@ -78,7 +80,8 @@ export async function fetchResourceById(resourceId) {
 
 /**
  * Creates a new shared resource document in Firestore.
- * @param {Object} resourceData - Title, subject, category, fileURL, etc.
+ * Automatically cleans up uploaded Storage file if Firestore creation fails!
+ * @param {Object} resourceData - Title, subject, category, fileURL, storagePath, etc.
  * @returns {Promise<string>} Document ID of created resource
  */
 export async function createResource(resourceData) {
@@ -91,37 +94,48 @@ export async function createResource(resourceData) {
         throw new Error("Title, subject, and fileURL are required fields.");
     }
 
+    const payload = {
+        title: resourceData.title.trim(),
+        description: (resourceData.description || "").trim(),
+        category: resourceData.category || "notes",
+        subject: resourceData.subject.trim(),
+        department: resourceData.department || "",
+        semester: resourceData.semester || "",
+        fileURL: resourceData.fileURL,
+        storagePath: resourceData.storagePath || "",
+        fileType: resourceData.fileType || "pdf",
+        fileSize: resourceData.fileSize || 0,
+        uploaderUid: user.uid,
+        uploaderName: resourceData.uploaderName || user.displayName || "Student",
+        downloadsCount: 0,
+        viewsCount: 0,
+        status: "active",
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+    };
+
     try {
         const colRef = collection(db, RESOURCES_COLLECTION);
-        const payload = {
-            title: resourceData.title.trim(),
-            description: (resourceData.description || "").trim(),
-            category: resourceData.category || "notes",
-            subject: resourceData.subject.trim(),
-            department: resourceData.department || "",
-            semester: resourceData.semester || "",
-            fileURL: resourceData.fileURL,
-            fileType: resourceData.fileType || "pdf",
-            fileSize: resourceData.fileSize || 0,
-            uploaderUid: user.uid,
-            uploaderName: resourceData.uploaderName || user.displayName || "Student",
-            downloadsCount: 0,
-            viewsCount: 0,
-            status: "active",
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp()
-        };
-
         const docRef = await addDoc(colRef, payload);
         return docRef.id;
     } catch (error) {
-        console.error("Error creating resource:", error);
+        console.error("Firestore Resource Creation Error! Initiating Storage cleanup guard...", error);
+        
+        // Automatic Storage Cleanup if Firestore write fails after Storage upload
+        if (resourceData.storagePath) {
+            try {
+                await deleteStorageFile(resourceData.storagePath);
+                console.log("Cleanup Guard: Orphaned Storage file successfully deleted.");
+            } catch (cleanupErr) {
+                console.error("Cleanup Guard Error deleting storage file:", cleanupErr);
+            }
+        }
         throw error;
     }
 }
 
 /**
- * Updates a resource document (preserves uploaderUid, createdAt, and excludes counters from arbitrary CRUD updates).
+ * Updates a resource document (preserves uploaderUid, createdAt, and excludes counters).
  * @param {string} resourceId 
  * @param {Object} updateFields 
  */
@@ -136,6 +150,7 @@ export async function updateResource(resourceId, updateFields = {}) {
         downloadsCount, 
         viewsCount, 
         id, 
+        storagePath,
         ...allowedFields 
     } = updateFields;
 
@@ -152,7 +167,7 @@ export async function updateResource(resourceId, updateFields = {}) {
 }
 
 /**
- * Deletes a shared resource document.
+ * Deletes a shared resource document AND its associated Storage file.
  * @param {string} resourceId 
  */
 export async function deleteResource(resourceId) {
@@ -160,8 +175,15 @@ export async function deleteResource(resourceId) {
     if (!user) throw new Error("Authentication required to delete resource.");
 
     try {
+        // Fetch resource document first to retrieve storagePath
+        const resource = await fetchResourceById(resourceId);
+        if (resource && resource.storagePath) {
+            await deleteStorageFile(resource.storagePath);
+        }
+
         const docRef = doc(db, RESOURCES_COLLECTION, resourceId);
         await deleteDoc(docRef);
+        console.log(`Resource ${resourceId} and storage file deleted successfully.`);
     } catch (error) {
         console.error(`Error deleting resource ${resourceId}:`, error);
         throw error;

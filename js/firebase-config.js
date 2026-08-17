@@ -7,9 +7,10 @@ import {
     setDoc, 
     serverTimestamp 
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+import { getStorage } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-storage.js";
 
 /* ==========================================================================
-   ACADEX FIREBASE CONFIGURATION & FIRESTORE SERVICES
+   ACADEX FIREBASE CONFIGURATION & FIRESTORE / STORAGE SERVICES
    ========================================================================== */
 const firebaseConfig = {
     apiKey: "AIzaSyB2HvU3VKdrB8JPl7QMtYTjdZJYhYEPZJU",
@@ -24,6 +25,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+export const storage = getStorage(app);
 
 /**
  * Checks whether a user profile document exists in Firestore at users/{uid} and if profileComplete is true

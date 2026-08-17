@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Academic Resources — Acadex</title>
+    <meta name="description" content="Browse, search, download, and share academic study resources, notes, assignments, and project guides on Acadex.">
+    <link rel="icon" type="image/svg+xml" href="../assets/logo/acadex-icon.svg">
+
+    <!-- Fonts & Shared Styles -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/dashboard.css">
+    <link rel="stylesheet" href="../css/resources.css">
+
+    <!-- Resources Logic Module -->
+    <script type="module" src="../js/resources.js"></script>
+</head>
+
+<body>
+
+    <!-- --------------------------------------------------------------------
+       1. TOP NAVIGATION HEADER
+       -------------------------------------------------------------------- -->
+    <header class="navbar">
+        <div class="nav-container">
+            <!-- Brand Logo -->
+            <a href="dashboard.html" class="nav-brand" aria-label="Acadex Home">
+                <img src="../assets/logo/acadex-icon.svg" alt="Acadex Logo" class="nav-logo-icon">
+                <span class="nav-brand-text">Acadex</span>
+            </a>
+
+            <!-- Navigation Links -->
+            <nav class="nav-links" aria-label="Main Navigation">
+                <a href="dashboard.html" class="nav-link">Dashboard</a>
+                <a href="resources.html" class="nav-link active" aria-current="page">Resources</a>
+                <a href="#" class="nav-link" id="navPapersLink">Past Papers</a>
+                <a href="#" class="nav-link" id="navMarketplaceLink">Marketplace</a>
+            </nav>
+
+            <!-- Navigation Actions & Profile Dropdown -->
+            <div class="nav-actions">
+                <!-- Theme Toggle Button -->
+                <button id="themeToggle" class="btn-icon" aria-label="Switch theme" title="Toggle theme">
+                    <svg class="sun-icon" viewBox="0 0 24 24" aria-hidden="true">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                    <svg class="moon-icon" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                </button>
+
+                <!-- User Profile Menu -->
+                <div class="profile-dropdown-container">
+                    <button id="profileMenuBtn" class="profile-btn" aria-expanded="false" aria-label="User profile menu">
+                        <div id="userAvatar" class="user-avatar-sm">--</div>
+                        <span id="userNameLabel" class="user-name-text">Student</span>
+                        <svg class="dropdown-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </button>
+
+                    <!-- Dropdown Menu -->
+                    <div id="profileDropdown" class="profile-dropdown" role="menu">
+                        <div class="dropdown-header">
+                            <span id="dropdownName" class="dropdown-user-name">Student Name</span>
+                            <span id="dropdownEmail" class="dropdown-user-email">student@acadex.edu</span>
+                        </div>
+                        <div class="dropdown-divider"></div>
+                        <a href="dashboard.html" class="dropdown-item" role="menuitem">
+                            <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+                            <span>Dashboard</span>
+                        </a>
+                        <button id="logoutBtn" class="dropdown-item logout-item" role="menuitem">
+                            <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                            <span>Sign Out</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Mobile Drawer Toggle -->
+                <button id="mobileDrawerToggle" class="btn-icon mobile-drawer-btn" aria-label="Open navigation menu">
+                    <svg viewBox="0 0 24 24"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Mobile Drawer Menu -->
+    <div id="mobileDrawer" class="mobile-drawer">
+        <div class="drawer-header">
+            <span class="drawer-title">Navigation</span>
+            <button id="closeDrawerBtn" class="btn-icon" aria-label="Close navigation menu">
+                <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+        </div>
+        <div class="drawer-links">
+            <a href="dashboard.html" class="drawer-link">Dashboard</a>
+            <a href="resources.html" class="drawer-link active">Resources</a>
+            <a href="#" class="drawer-link">Past Papers</a>
+            <a href="#" class="drawer-link">Marketplace</a>
+        </div>
+    </div>
+    <div id="drawerOverlay" class="drawer-overlay"></div>
+
+    <!-- --------------------------------------------------------------------
+       2. MAIN RESOURCES LAYOUT
+       -------------------------------------------------------------------- -->
+    <main class="resources-main">
+        <div class="resources-container">
+
+            <!-- Page Header & Action -->
+            <div class="resources-header">
+                <div>
+                    <h1 class="page-title">Academic Resources</h1>
+                    <p class="page-subtitle">Browse, download, and share verified study notes, assignments, and project guides.</p>
+                </div>
+                <button id="openUploadModalBtn" class="btn-primary-lg">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    <span>Upload Resource</span>
+                </button>
+            </div>
+
+            <!-- Filter & Search Bar -->
+            <div class="filter-card">
+                <div class="search-box">
+                    <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    <input type="text" id="searchInput" class="search-input" placeholder="Search resources by title or subject...">
+                </div>
+
+                <div class="filter-selects-row">
+                    <div class="select-wrapper">
+                        <select id="categoryFilter" class="select-field">
+                            <option value="all">All Categories</option>
+                            <option value="notes">Notes</option>
+                            <option value="assignment">Assignments</option>
+                            <option value="project">Projects</option>
+                            <option value="guide">Guides</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+
+                    <div class="select-wrapper">
+                        <select id="departmentFilter" class="select-field">
+                            <option value="all">All Departments</option>
+                            <option value="Computer Science">Computer Science</option>
+                            <option value="Computer Engineering">Computer Engineering</option>
+                            <option value="Information Technology">Information Technology</option>
+                            <option value="BCA">BCA</option>
+                            <option value="BIM">BIM</option>
+                            <option value="Management">Management</option>
+                            <option value="Business">Business</option>
+                            <option value="Science">Science</option>
+                            <option value="Arts">Arts</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+
+                    <div class="select-wrapper">
+                        <select id="semesterFilter" class="select-field">
+                            <option value="all">All Semesters</option>
+                            <option value="Semester 1">Semester 1</option>
+                            <option value="Semester 2">Semester 2</option>
+                            <option value="Semester 3">Semester 3</option>
+                            <option value="Semester 4">Semester 4</option>
+                            <option value="Semester 5">Semester 5</option>
+                            <option value="Semester 6">Semester 6</option>
+                            <option value="Semester 7">Semester 7</option>
+                            <option value="Semester 8">Semester 8</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resource Grid / Feed -->
+            <div id="resourcesGrid" class="resources-grid">
+                <!-- Skeleton Shimmer Loader (Shown during fetch) -->
+                <div class="skeleton-card">
+                    <div class="skeleton-badge"></div>
+                    <div class="skeleton-line title"></div>
+                    <div class="skeleton-line meta"></div>
+                    <div class="skeleton-actions"></div>
+                </div>
+                <div class="skeleton-card">
+                    <div class="skeleton-badge"></div>
+                    <div class="skeleton-line title"></div>
+                    <div class="skeleton-line meta"></div>
+                    <div class="skeleton-actions"></div>
+                </div>
+                <div class="skeleton-card">
+                    <div class="skeleton-badge"></div>
+                    <div class="skeleton-line title"></div>
+                    <div class="skeleton-line meta"></div>
+                    <div class="skeleton-actions"></div>
+                </div>
+            </div>
+
+            <!-- Empty State -->
+            <div id="emptyState" class="state-card" style="display: none;">
+                <svg class="state-icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="9" y1="15" x2="15" y2="15"></line></svg>
+                <h3 class="state-title">No resources found</h3>
+                <p class="state-subtitle">No academic resources match your filter criteria. Try adjusting your search query.</p>
+            </div>
+
+            <!-- Error State -->
+            <div id="errorState" class="state-card" style="display: none;">
+                <svg class="state-icon error-color" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                <h3 class="state-title">Unable to load resources</h3>
+                <p class="state-subtitle">We couldn't connect to Firestore. Please check your network connection and try again.</p>
+                <button id="retryFetchBtn" class="btn-secondary" style="margin-top: 12px;">Retry</button>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- --------------------------------------------------------------------
+       3. UPLOAD RESOURCE MODAL
+       -------------------------------------------------------------------- -->
+    <div id="uploadResourceModal" class="modal-backdrop" style="display: none;">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h2 class="modal-title">Upload Academic Resource</h2>
+                <button id="closeUploadModalBtn" class="btn-icon" aria-label="Close modal">
+                    <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+
+            <form id="uploadResourceForm" class="modal-form">
+                <div class="form-group">
+                    <label for="resourceTitle" class="form-label">Resource Title *</label>
+                    <input type="text" id="resourceTitle" class="form-input" placeholder="e.g. Data Structures Chapter 1-5 Notes" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="resourceSubject" class="form-label">Subject *</label>
+                        <input type="text" id="resourceSubject" class="form-input" placeholder="e.g. Data Structures" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="resourceCategory" class="form-label">Category *</label>
+                        <div class="select-wrapper">
+                            <select id="resourceCategory" class="select-field" required>
+                                <option value="notes">Notes</option>
+                                <option value="assignment">Assignment</option>
+                                <option value="project">Project</option>
+                                <option value="guide">Guide</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="resourceDepartment" class="form-label">Department *</label>
+                        <div class="select-wrapper">
+                            <select id="resourceDepartment" class="select-field" required>
+                                <option value="Computer Science">Computer Science</option>
+                                <option value="Computer Engineering">Computer Engineering</option>
+                                <option value="Information Technology">Information Technology</option>
+                                <option value="BCA">BCA</option>
+                                <option value="BIM">BIM</option>
+                                <option value="Management">Management</option>
+                                <option value="Business">Business</option>
+                                <option value="Science">Science</option>
+                                <option value="Arts">Arts</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="resourceSemester" class="form-label">Semester *</label>
+                        <div class="select-wrapper">
+                            <select id="resourceSemester" class="select-field" required>
+                                <option value="Semester 1">Semester 1</option>
+                                <option value="Semester 2">Semester 2</option>
+                                <option value="Semester 3">Semester 3</option>
+                                <option value="Semester 4">Semester 4</option>
+                                <option value="Semester 5">Semester 5</option>
+                                <option value="Semester 6">Semester 6</option>
+                                <option value="Semester 7">Semester 7</option>
+                                <option value="Semester 8">Semester 8</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="resourceDescription" class="form-label">Description (Optional)</label>
+                    <textarea id="resourceDescription" class="form-textarea" rows="3" placeholder="Brief details about what this document covers..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="fileInput" class="form-label">Resource File (PDF, DOCX, ZIP - Max 25MB) *</label>
+                    <input type="file" id="fileInput" class="file-input-field" accept=".pdf,.docx,.doc,.zip,.png,.jpg,.jpeg,.webp" required>
+                    <span id="fileInputHint" class="input-hint">Select a file from your computer.</span>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" id="cancelUploadBtn" class="btn-secondary">Cancel</button>
+                    <button type="submit" id="submitUploadBtn" class="btn-primary">
+                        <span id="submitUploadLabel">Upload File & Create Resource</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- --------------------------------------------------------------------
+       4. RESOURCE DETAILS MODAL
+       -------------------------------------------------------------------- -->
+    <div id="resourceDetailsModal" class="modal-backdrop" style="display: none;">
+        <div class="modal-box">
+            <div class="modal-header">
+                <span id="modalCategoryBadge" class="resource-type-badge">Notes</span>
+                <button id="closeDetailsModalBtn" class="btn-icon" aria-label="Close modal">
+                    <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+
+            <div class="details-body">
+                <h2 id="modalTitle" class="details-title">--</h2>
+                <div id="modalMeta" class="details-meta">-- • --</div>
+
+                <div class="details-section">
+                    <h4 class="details-heading">Description</h4>
+                    <p id="modalDescription" class="details-text">--</p>
+                </div>
+
+                <div class="details-info-grid">
+                    <div class="info-item">
+                        <span class="info-label">Uploaded by</span>
+                        <span id="modalUploader" class="info-val">--</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">File Size</span>
+                        <span id="modalFileSize" class="info-val">--</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer space-between">
+                <button id="modalBookmarkBtn" class="btn-secondary">
+                    <svg class="btn-icon-svg" viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
+                    <span id="modalBookmarkText">Save Bookmark</span>
+                </button>
+
+                <a id="modalDownloadBtn" href="#" target="_blank" download class="btn-primary">
+                    <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    <span>Download File</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="toast-container" aria-live="polite"></div>
+
+</body>
+
+</html>
