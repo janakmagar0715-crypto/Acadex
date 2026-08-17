@@ -408,26 +408,33 @@ document.addEventListener("DOMContentLoaded", () => {
                     if (backBtn) backBtn.disabled = true;
                     if (nextBtnLabel) nextBtnLabel.textContent = "Saving profile...";
 
-                    // Create users/{uid} document in Firestore
+                    // 3. Create or Update users/{uid} document in Firestore
                     const userDocRef = doc(db, "users", activeUser.uid);
+                    const existingSnap = await getDoc(userDocRef);
+                    const existingData = existingSnap.exists() ? existingSnap.data() : null;
+
                     const userProfilePayload = {
                         uid: activeUser.uid,
                         firstName: firstVal,
                         lastName: lastVal,
                         displayName: `${firstVal} ${lastVal}`.trim(),
-                        email: activeUser.email || "",
-                        photoURL: activeUser.photoURL || null,
+                        email: activeUser.email || (existingData ? existingData.email : ""),
+                        photoURL: activeUser.photoURL || (existingData ? existingData.photoURL : null),
                         department: deptVal,
                         year: yrVal,
                         semester: semVal,
                         interests: selectedInterests,
                         profileComplete: true,
-                        createdAt: serverTimestamp(),
                         updatedAt: serverTimestamp()
                     };
 
-                    // Perform Firestore write
-                    await setDoc(userDocRef, userProfilePayload);
+                    // Only set createdAt if document does not exist yet to satisfy Firestore immutability rule
+                    if (!existingData || !existingData.createdAt) {
+                        userProfilePayload.createdAt = serverTimestamp();
+                    }
+
+                    // Perform Firestore write with merge
+                    await setDoc(userDocRef, userProfilePayload, { merge: true });
 
                     console.log("Onboarding complete! Firestore user profile created successfully for:", activeUser.uid);
                     isSaveSuccessful = true;
