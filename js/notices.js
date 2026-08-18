@@ -1,7 +1,7 @@
 /* ==========================================================================
    ACADEX CLUB NOTICES V1 CONTROLLER (js/notices.js)
    Auth protection, fetching club notices from Firestore, tab filters,
-   and posting new campus notices.
+   posting new campus notices, and unified modal UI controllers.
    ========================================================================== */
 
 import { auth, db, checkUserProfile } from "./firebase-config.js";
@@ -15,6 +15,13 @@ import {
     serverTimestamp 
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 import { initNavbar } from "./components/navbar.js";
+import { 
+    setupModal, 
+    openModal, 
+    closeModal, 
+    showToast, 
+    setModalLoadingLock 
+} from "./components/modal.js";
 import { escapeHtml } from "./utils.js";
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -56,32 +63,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     /* ----------------------------------------------------------------------
-       2. TOAST NOTIFICATION SYSTEM
-       ---------------------------------------------------------------------- */
-    const toastContainer = document.getElementById("toastContainer");
-
-    function showToast(message, isSuccess = true) {
-        if (!toastContainer) return;
-
-        toastContainer.innerHTML = "";
-        const toast = document.createElement("div");
-        toast.className = "toast";
-
-        const iconSvg = isSuccess
-            ? `<svg class="toast-icon toast-lime" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`
-            : `<svg class="toast-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>`;
-
-        toast.innerHTML = `${iconSvg}<span>${message}</span>`;
-        toastContainer.appendChild(toast);
-
-        setTimeout(() => {
-            toast.classList.add("toast-exit");
-            toast.addEventListener("animationend", () => toast.remove());
-        }, 3200);
-    }
-
-    /* ----------------------------------------------------------------------
-       3. STATE VARIABLES & DOM REFERENCES
+       2. STATE VARIABLES & DOM REFERENCES
        ---------------------------------------------------------------------- */
     let currentUser = null;
     let allNoticesList = [];
@@ -144,7 +126,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (drawerOverlay) drawerOverlay.addEventListener("click", () => toggleDrawer(false));
 
     /* ----------------------------------------------------------------------
-       4. AUTH STATE OBSERVER & PROFILE BINDING
+       3. AUTH STATE OBSERVER & PROFILE BINDING
        ---------------------------------------------------------------------- */
     onAuthStateChanged(auth, async (user) => {
         if (!user) {
@@ -166,6 +148,12 @@ document.addEventListener("DOMContentLoaded", () => {
             renderUserProfile(user, profileData);
 
             await loadNotices();
+
+            // Check URL query parameters for auto-opening post notice modal (e.g. ?upload=true)
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get("action") === "upload" || urlParams.get("upload") === "true" || urlParams.get("upload") === "1" || urlParams.get("post") === "true") {
+                openNoticeModal();
+            }
 
         } catch (err) {
             console.error("Notices Auth Observer Error:", err);
@@ -192,7 +180,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     /* ----------------------------------------------------------------------
-       5. FETCH & RENDER NOTICES
+       4. FETCH & RENDER NOTICES
        ---------------------------------------------------------------------- */
     async function loadNotices() {
         if (!noticesGrid) return;
@@ -263,7 +251,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     /* ----------------------------------------------------------------------
-       6. TAB FILTERS & POST MODAL
+       5. TAB FILTERS & POST NOTICES MODAL CONTROLLER
        ---------------------------------------------------------------------- */
     tabButtons.forEach(btn => {
         btn.addEventListener("click", () => {
@@ -284,24 +272,32 @@ document.addEventListener("DOMContentLoaded", () => {
     const submitNoticeLabel = document.getElementById("submitNoticeLabel");
     let isSubmittingNotice = false;
 
-    function openModal() {
+    setupModal({
+        modalElement: postNoticeModal,
+        openTriggers: [openPostNoticeBtn],
+        closeTriggers: [closeNoticeModalBtn, cancelNoticeBtn],
+        isUploadingGetter: () => isSubmittingNotice
+    });
+
+    function openNoticeModal() {
         if (!postNoticeModal) return;
-        postNoticeForm.reset();
-        postNoticeModal.style.display = "flex";
+        openModal(postNoticeModal);
     }
 
-    function closeModal() {
-        if (postNoticeModal && !isSubmittingNotice) postNoticeModal.style.display = "none";
+    function resetFormErrors() {
+        if (!postNoticeForm) return;
+        postNoticeForm.querySelectorAll(".form-group").forEach(group => {
+            group.classList.remove("has-error");
+            const errEl = group.querySelector(".field-error-text");
+            if (errEl) errEl.style.display = "none";
+        });
     }
-
-    if (openPostNoticeBtn) openPostNoticeBtn.addEventListener("click", openModal);
-    if (closeNoticeModalBtn) closeNoticeModalBtn.addEventListener("click", closeModal);
-    if (cancelNoticeBtn) cancelNoticeBtn.addEventListener("click", closeModal);
 
     if (postNoticeForm) {
         postNoticeForm.addEventListener("submit", async (e) => {
             e.preventDefault();
             if (!currentUser || isSubmittingNotice) return;
+            resetFormErrors();
 
             const titleInput = document.getElementById("noticeTitle");
             const clubInput = document.getElementById("noticeClub");
@@ -358,11 +354,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
             try {
                 isSubmittingNotice = true;
+                setModalLoadingLock(postNoticeModal, true);
                 if (submitNoticeBtn) {
                     submitNoticeBtn.disabled = true;
                     submitNoticeBtn.classList.add("btn-loading");
                 }
                 if (cancelNoticeBtn) cancelNoticeBtn.disabled = true;
+                if (closeNoticeModalBtn) closeNoticeModalBtn.disabled = true;
                 if (submitNoticeLabel) submitNoticeLabel.innerHTML = `<span class="btn-spinner"></span> <span>Publishing Notice...</span>`;
 
                 const colRef = collection(db, "notices");
@@ -377,19 +375,21 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
 
                 isSuccess = true;
-                showToast("Notice posted successfully!", true);
-                closeModal();
+                showToast("Uploaded successfully ✓", true);
+                closeModal(postNoticeModal);
                 await loadNotices();
             } catch (err) {
                 console.error("Post notice error:", err);
                 showToast("Failed to post notice. Please try again.", false);
             } finally {
                 isSubmittingNotice = false;
+                setModalLoadingLock(postNoticeModal, false);
                 if (submitNoticeBtn) {
                     submitNoticeBtn.disabled = false;
                     submitNoticeBtn.classList.remove("btn-loading");
                 }
                 if (cancelNoticeBtn) cancelNoticeBtn.disabled = false;
+                if (closeNoticeModalBtn) closeNoticeModalBtn.disabled = false;
                 if (submitNoticeLabel) submitNoticeLabel.textContent = "Publish Notice";
 
                 if (isSuccess) {

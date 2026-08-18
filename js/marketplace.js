@@ -1,7 +1,8 @@
 /* ==========================================================================
    ACADEX STUDENT MARKETPLACE V1 CONTROLLER (js/marketplace.js)
    Auth protection, search/filtering, Cloud Storage image upload,
-   Firestore CRUD, contact seller modal, and private bookmark toggles.
+   Firestore CRUD, contact seller modal, private bookmark toggles,
+   and unified modal UI controllers.
    ========================================================================== */
 
 import { auth, checkUserProfile } from "./firebase-config.js";
@@ -11,6 +12,14 @@ import { uploadResourceFile } from "./services/storage.js";
 import { fetchUserBookmarks, addBookmark, removeBookmark } from "./services/bookmarks.js";
 import { initNavbar } from "./components/navbar.js";
 import { setupFileUpload } from "./components/file-upload.js";
+import { 
+    setupModal, 
+    openModal, 
+    closeModal, 
+    showToast, 
+    showConfirmModal, 
+    setModalLoadingLock 
+} from "./components/modal.js";
 import { escapeHtml } from "./utils.js";
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -52,32 +61,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     /* ----------------------------------------------------------------------
-       2. TOAST NOTIFICATION SYSTEM
-       ---------------------------------------------------------------------- */
-    const toastContainer = document.getElementById("toastContainer");
-
-    function showToast(message, isSuccess = true) {
-        if (!toastContainer) return;
-
-        toastContainer.innerHTML = "";
-        const toast = document.createElement("div");
-        toast.className = "toast";
-
-        const iconSvg = isSuccess
-            ? `<svg class="toast-icon toast-lime" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`
-            : `<svg class="toast-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>`;
-
-        toast.innerHTML = `${iconSvg}<span>${message}</span>`;
-        toastContainer.appendChild(toast);
-
-        setTimeout(() => {
-            toast.classList.add("toast-exit");
-            toast.addEventListener("animationend", () => toast.remove());
-        }, 3200);
-    }
-
-    /* ----------------------------------------------------------------------
-       3. STATE VARIABLES & DOM REFERENCES
+       2. STATE VARIABLES & DOM REFERENCES
        ---------------------------------------------------------------------- */
     let currentUser = null;
     let userBookmarksSet = new Set();
@@ -148,7 +132,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (drawerOverlay) drawerOverlay.addEventListener("click", () => toggleDrawer(false));
 
     /* ----------------------------------------------------------------------
-       4. AUTH STATE OBSERVER & PROFILE BINDING
+       3. AUTH STATE OBSERVER & PROFILE BINDING
        ---------------------------------------------------------------------- */
     onAuthStateChanged(auth, async (user) => {
         if (!user) {
@@ -175,6 +159,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
             // Load Marketplace Feed
             await loadMarketplaceItems();
+
+            // Check URL query parameters for auto-opening upload modal (e.g. ?upload=true)
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get("action") === "upload" || urlParams.get("upload") === "true" || urlParams.get("upload") === "1") {
+                openUploadModal();
+            }
 
         } catch (err) {
             console.error("Marketplace Auth Observer Error:", err);
@@ -211,7 +201,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     /* ----------------------------------------------------------------------
-       5. MARKETPLACE FEED FETCHING & RENDERING
+       4. MARKETPLACE FEED FETCHING & RENDERING
        ---------------------------------------------------------------------- */
     async function loadMarketplaceItems() {
         if (!marketplaceGrid) return;
@@ -320,15 +310,13 @@ document.addEventListener("DOMContentLoaded", () => {
         marketplaceGrid.querySelectorAll(".delete-btn").forEach(btn => {
             btn.addEventListener("click", async () => {
                 const itemId = btn.getAttribute("data-id");
-                if (confirm("Are you sure you want to delete this listing?")) {
-                    await handleItemDelete(itemId);
-                }
+                await handleItemDelete(itemId);
             });
         });
     }
 
     /* ----------------------------------------------------------------------
-       6. FILTER & SEARCH HANDLERS
+       5. FILTER & SEARCH HANDLERS
        ---------------------------------------------------------------------- */
     if (searchInput) searchInput.addEventListener("input", () => loadMarketplaceItems());
     if (categoryFilter) categoryFilter.addEventListener("change", () => loadMarketplaceItems());
@@ -336,7 +324,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (retryFetchBtn) retryFetchBtn.addEventListener("click", () => loadMarketplaceItems());
 
     /* ----------------------------------------------------------------------
-       7. BOOKMARK TOGGLE ENGINE
+       6. BOOKMARK TOGGLE ENGINE
        ---------------------------------------------------------------------- */
     async function handleBookmarkToggle(itemId, btnElement) {
         if (!currentUser) return;
@@ -374,9 +362,22 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     /* ----------------------------------------------------------------------
-       8. ITEM DELETION HANDLER
+       7. UNIFIED DESTRUCTIVE DELETION MODAL HANDLER
        ---------------------------------------------------------------------- */
     async function handleItemDelete(itemId) {
+        const item = currentItemsList.find(i => i.id === itemId);
+        const itemTitle = item ? item.title : "this listing";
+
+        const confirmed = await showConfirmModal({
+            title: "Delete Listing?",
+            message: `Are you sure you want to delete "${itemTitle}"? This will permanently remove the item from the student marketplace.`,
+            confirmText: "Delete Listing",
+            cancelText: "Cancel",
+            isDanger: true
+        });
+
+        if (!confirmed) return;
+
         try {
             showToast("Deleting marketplace item...");
             await deleteMarketplaceItem(itemId);
@@ -384,12 +385,12 @@ document.addEventListener("DOMContentLoaded", () => {
             await loadMarketplaceItems();
         } catch (err) {
             console.error("Delete marketplace item error:", err);
-            showToast("Failed to delete item. " + (err.message || ""), false);
+            showToast("Failed to delete item: " + (err.message || "Unknown error"), false);
         }
     }
 
     /* ----------------------------------------------------------------------
-       9. CONTACT SELLER MODAL HANDLER
+       8. CONTACT SELLER MODAL HANDLER
        ---------------------------------------------------------------------- */
     const contactSellerModal = document.getElementById("contactSellerModal");
     const closeContactModalBtn = document.getElementById("closeContactModalBtn");
@@ -398,6 +399,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const sellerNameVal = document.getElementById("sellerNameVal");
     const sellerPhoneVal = document.getElementById("sellerPhoneVal");
     const sellerCallBtn = document.getElementById("sellerCallBtn");
+
+    setupModal({
+        modalElement: contactSellerModal,
+        closeTriggers: [closeContactModalBtn]
+    });
 
     function openContactModal(itemId) {
         const item = currentItemsList.find(i => i.id === itemId);
@@ -411,21 +417,11 @@ document.addEventListener("DOMContentLoaded", () => {
             sellerCallBtn.href = item.contactNumber ? `tel:${item.contactNumber}` : "#";
         }
 
-        contactSellerModal.style.display = "flex";
-    }
-
-    if (closeContactModalBtn && contactSellerModal) {
-        closeContactModalBtn.addEventListener("click", () => {
-            contactSellerModal.style.display = "none";
-        });
-
-        contactSellerModal.addEventListener("click", (e) => {
-            if (e.target === contactSellerModal) contactSellerModal.style.display = "none";
-        });
+        openModal(contactSellerModal);
     }
 
     /* ----------------------------------------------------------------------
-       10. LIST AN ITEM MODAL CONTROLLER
+       9. LIST AN ITEM MODAL CONTROLLER
        ---------------------------------------------------------------------- */
     const uploadItemModal = document.getElementById("uploadItemModal");
     const openUploadModalBtn = document.getElementById("openUploadModalBtn");
@@ -442,8 +438,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const contactNumberInput = document.getElementById("contactNumber");
     const itemDescriptionInput = document.getElementById("itemDescription");
     const fileInput = document.getElementById("fileInput");
-
     const fileUploadContainer = document.getElementById("fileUploadContainer");
+
     const fileUpload = setupFileUpload({
         containerElement: fileUploadContainer,
         fileInputElement: fileInput,
@@ -451,28 +447,33 @@ document.addEventListener("DOMContentLoaded", () => {
         allowedExtensions: [".png", ".jpg", ".jpeg", ".webp"]
     });
 
+    setupModal({
+        modalElement: uploadItemModal,
+        openTriggers: [openUploadModalBtn],
+        closeTriggers: [closeUploadModalBtn, cancelUploadBtn],
+        isUploadingGetter: () => isUploading
+    });
+
     function openUploadModal() {
         if (!uploadItemModal) return;
-        uploadItemForm.reset();
-        if (fileUpload) fileUpload.reset();
-        uploadItemModal.style.display = "flex";
+        openModal(uploadItemModal);
     }
 
-    function closeUploadModal() {
-        if (uploadItemModal && !isUploading) {
-            uploadItemModal.style.display = "none";
-        }
+    function resetFormErrors() {
+        if (!uploadItemForm) return;
+        uploadItemForm.querySelectorAll(".form-group").forEach(group => {
+            group.classList.remove("has-error");
+            const errEl = group.querySelector(".field-error-text");
+            if (errEl) errEl.style.display = "none";
+        });
     }
-
-    if (openUploadModalBtn) openUploadModalBtn.addEventListener("click", openUploadModal);
-    if (closeUploadModalBtn) closeUploadModalBtn.addEventListener("click", closeUploadModal);
-    if (cancelUploadBtn) cancelUploadBtn.addEventListener("click", closeUploadModal);
 
     if (uploadItemForm) {
         uploadItemForm.addEventListener("submit", async (e) => {
             e.preventDefault();
 
             if (isUploading || !currentUser) return;
+            resetFormErrors();
 
             const titleVal = itemTitleInput.value.trim();
             const priceVal = parseFloat(itemPriceInput.value) || 0;
@@ -520,8 +521,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
             try {
                 isUploading = true;
+                setModalLoadingLock(uploadItemModal, true);
                 submitUploadBtn.disabled = true;
                 if (cancelUploadBtn) cancelUploadBtn.disabled = true;
+                if (closeUploadModalBtn) closeUploadModalBtn.disabled = true;
                 submitUploadBtn.classList.add("btn-loading");
                 if (submitUploadLabel) submitUploadLabel.innerHTML = `<span class="btn-spinner"></span> <span>Publishing Listing...</span>`;
 
@@ -529,7 +532,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 const storageResult = await uploadResourceFile(selectedFile, currentUser.uid);
 
                 // 2. Create Cloud Firestore Marketplace Document
-                const itemId = await createMarketplaceItem({
+                await createMarketplaceItem({
                     title: titleVal,
                     price: priceVal,
                     category: categoryVal,
@@ -542,9 +545,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
 
                 isSuccess = true;
-                showToast("Marketplace item listed successfully!", true);
+                showToast("Uploaded successfully ✓", true);
 
-                closeUploadModal();
+                closeModal(uploadItemModal);
                 await loadMarketplaceItems();
 
             } catch (error) {
@@ -552,8 +555,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 showToast("Upload failed: " + (error.message || "Please check your connection."), false);
             } finally {
                 isUploading = false;
+                setModalLoadingLock(uploadItemModal, false);
                 submitUploadBtn.disabled = false;
                 if (cancelUploadBtn) cancelUploadBtn.disabled = false;
+                if (closeUploadModalBtn) closeUploadModalBtn.disabled = false;
                 submitUploadBtn.classList.remove("btn-loading");
                 if (submitUploadLabel) submitUploadLabel.textContent = "Publish Listing";
 

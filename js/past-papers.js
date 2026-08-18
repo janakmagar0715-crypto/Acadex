@@ -1,7 +1,7 @@
 /* ==========================================================================
    ACADEX PAST EXAMINATION PAPERS V1 CONTROLLER (js/past-papers.js)
    Auth protection, paper filtering, Cloud Storage upload, Firestore CRUD,
-   private bookmark toggles, and modal UI controllers.
+   private bookmark toggles, and unified modal UI controllers.
    ========================================================================== */
 
 import { auth, checkUserProfile } from "./firebase-config.js";
@@ -11,6 +11,14 @@ import { uploadResourceFile } from "./services/storage.js";
 import { fetchUserBookmarks, addBookmark, removeBookmark } from "./services/bookmarks.js";
 import { initNavbar } from "./components/navbar.js";
 import { setupFileUpload } from "./components/file-upload.js";
+import { 
+    setupModal, 
+    openModal, 
+    closeModal, 
+    showToast, 
+    showConfirmModal, 
+    setModalLoadingLock 
+} from "./components/modal.js";
 import { escapeHtml } from "./utils.js";
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -52,32 +60,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     /* ----------------------------------------------------------------------
-       2. TOAST NOTIFICATION SYSTEM
-       ---------------------------------------------------------------------- */
-    const toastContainer = document.getElementById("toastContainer");
-
-    function showToast(message, isSuccess = true) {
-        if (!toastContainer) return;
-
-        toastContainer.innerHTML = "";
-        const toast = document.createElement("div");
-        toast.className = "toast";
-
-        const iconSvg = isSuccess
-            ? `<svg class="toast-icon toast-lime" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`
-            : `<svg class="toast-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>`;
-
-        toast.innerHTML = `${iconSvg}<span>${message}</span>`;
-        toastContainer.appendChild(toast);
-
-        setTimeout(() => {
-            toast.classList.add("toast-exit");
-            toast.addEventListener("animationend", () => toast.remove());
-        }, 3200);
-    }
-
-    /* ----------------------------------------------------------------------
-       3. STATE VARIABLES & DOM REFERENCES
+       2. STATE VARIABLES & DOM REFERENCES
        ---------------------------------------------------------------------- */
     let currentUser = null;
     let userBookmarksSet = new Set();
@@ -150,7 +133,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (drawerOverlay) drawerOverlay.addEventListener("click", () => toggleDrawer(false));
 
     /* ----------------------------------------------------------------------
-       4. AUTH STATE OBSERVER & PROFILE BINDING
+       3. AUTH STATE OBSERVER & PROFILE BINDING
        ---------------------------------------------------------------------- */
     onAuthStateChanged(auth, async (user) => {
         if (!user) {
@@ -177,6 +160,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
             // Load Past Papers Feed
             await loadPastPapers();
+
+            // Check URL query parameters for auto-opening upload modal (e.g. ?upload=true)
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get("action") === "upload" || urlParams.get("upload") === "true" || urlParams.get("upload") === "1") {
+                openUploadModal();
+            }
 
         } catch (err) {
             console.error("Past Papers Auth Observer Error:", err);
@@ -213,7 +202,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     /* ----------------------------------------------------------------------
-       5. PAST PAPERS FEED FETCHING & RENDERING
+       4. PAST PAPERS FEED FETCHING & RENDERING
        ---------------------------------------------------------------------- */
     async function loadPastPapers() {
         if (!papersGrid) return;
@@ -344,15 +333,13 @@ document.addEventListener("DOMContentLoaded", () => {
         papersGrid.querySelectorAll(".delete-btn").forEach(btn => {
             btn.addEventListener("click", async () => {
                 const paperId = btn.getAttribute("data-id");
-                if (confirm("Are you sure you want to delete this past paper and its associated file?")) {
-                    await handlePaperDelete(paperId);
-                }
+                await handlePaperDelete(paperId);
             });
         });
     }
 
     /* ----------------------------------------------------------------------
-       6. FILTER & SEARCH HANDLERS
+       5. FILTER & SEARCH HANDLERS
        ---------------------------------------------------------------------- */
     if (searchInput) searchInput.addEventListener("input", () => loadPastPapers());
     if (examTypeFilter) examTypeFilter.addEventListener("change", () => loadPastPapers());
@@ -362,7 +349,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (retryFetchBtn) retryFetchBtn.addEventListener("click", () => loadPastPapers());
 
     /* ----------------------------------------------------------------------
-       7. BOOKMARK TOGGLE ENGINE
+       6. BOOKMARK TOGGLE ENGINE
        ---------------------------------------------------------------------- */
     async function handleBookmarkToggle(paperId, btnElement) {
         if (!currentUser) return;
@@ -400,22 +387,35 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     /* ----------------------------------------------------------------------
-       8. PAPER DELETION HANDLER
+       7. UNIFIED DESTRUCTIVE DELETION MODAL HANDLER
        ---------------------------------------------------------------------- */
     async function handlePaperDelete(paperId) {
+        const item = currentPapersList.find(p => p.id === paperId);
+        const itemTitle = item ? item.title : "this past paper";
+
+        const confirmed = await showConfirmModal({
+            title: "Delete Past Paper?",
+            message: `Are you sure you want to delete "${itemTitle}"? This will permanently delete the file and paper record.`,
+            confirmText: "Delete Paper",
+            cancelText: "Cancel",
+            isDanger: true
+        });
+
+        if (!confirmed) return;
+
         try {
-            showToast("Deleting past paper and file...");
+            showToast("Deleting past paper...");
             await deletePastPaper(paperId);
             showToast("Past paper deleted successfully!", true);
             await loadPastPapers();
         } catch (err) {
             console.error("Delete past paper error:", err);
-            showToast("Failed to delete past paper. " + (err.message || ""), false);
+            showToast("Failed to delete past paper: " + (err.message || "Unknown error"), false);
         }
     }
 
     /* ----------------------------------------------------------------------
-       9. PAPER DETAILS MODAL HANDLER
+       8. PAPER DETAILS MODAL CONTROLLER
        ---------------------------------------------------------------------- */
     const paperDetailsModal = document.getElementById("paperDetailsModal");
     const closeDetailsModalBtn = document.getElementById("closeDetailsModalBtn");
@@ -432,6 +432,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const modalBookmarkText = document.getElementById("modalBookmarkText");
 
     let currentActiveDetailsId = null;
+
+    setupModal({
+        modalElement: paperDetailsModal,
+        closeTriggers: [closeDetailsModalBtn]
+    });
 
     function openDetailsModal(paperId) {
         const item = currentPapersList.find(p => p.id === paperId);
@@ -461,7 +466,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         updateModalBookmarkState();
 
-        paperDetailsModal.style.display = "flex";
+        openModal(paperDetailsModal);
     }
 
     function updateModalBookmarkState() {
@@ -471,16 +476,6 @@ document.addEventListener("DOMContentLoaded", () => {
         if (modalBookmarkBtn) {
             modalBookmarkBtn.classList.toggle("bookmarked", isBookmarked);
         }
-    }
-
-    if (closeDetailsModalBtn && paperDetailsModal) {
-        closeDetailsModalBtn.addEventListener("click", () => {
-            paperDetailsModal.style.display = "none";
-        });
-
-        paperDetailsModal.addEventListener("click", (e) => {
-            if (e.target === paperDetailsModal) paperDetailsModal.style.display = "none";
-        });
     }
 
     if (modalBookmarkBtn) {
@@ -495,7 +490,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     /* ----------------------------------------------------------------------
-       10. UPLOAD PAST PAPER MODAL CONTROLLER
+       9. UPLOAD PAST PAPER MODAL CONTROLLER
        ---------------------------------------------------------------------- */
     const uploadPaperModal = document.getElementById("uploadPaperModal");
     const openUploadModalBtn = document.getElementById("openUploadModalBtn");
@@ -514,6 +509,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const paperYearInput = document.getElementById("paperYear");
     const fileInput = document.getElementById("fileInput");
     const fileUploadContainer = document.getElementById("fileUploadContainer");
+
     const fileUpload = setupFileUpload({
         containerElement: fileUploadContainer,
         fileInputElement: fileInput,
@@ -521,28 +517,33 @@ document.addEventListener("DOMContentLoaded", () => {
         allowedExtensions: [".pdf", ".zip", ".png", ".jpg", ".jpeg"]
     });
 
+    setupModal({
+        modalElement: uploadPaperModal,
+        openTriggers: [openUploadModalBtn],
+        closeTriggers: [closeUploadModalBtn, cancelUploadBtn],
+        isUploadingGetter: () => isUploading
+    });
+
     function openUploadModal() {
         if (!uploadPaperModal) return;
-        uploadPaperForm.reset();
-        if (fileUpload) fileUpload.reset();
-        uploadPaperModal.style.display = "flex";
+        openModal(uploadPaperModal);
     }
 
-    function closeUploadModal() {
-        if (uploadPaperModal && !isUploading) {
-            uploadPaperModal.style.display = "none";
-        }
+    function resetFormErrors() {
+        if (!uploadPaperForm) return;
+        uploadPaperForm.querySelectorAll(".form-group").forEach(group => {
+            group.classList.remove("has-error");
+            const errEl = group.querySelector(".field-error-text");
+            if (errEl) errEl.style.display = "none";
+        });
     }
-
-    if (openUploadModalBtn) openUploadModalBtn.addEventListener("click", openUploadModal);
-    if (closeUploadModalBtn) closeUploadModalBtn.addEventListener("click", closeUploadModal);
-    if (cancelUploadBtn) cancelUploadBtn.addEventListener("click", closeUploadModal);
 
     if (uploadPaperForm) {
         uploadPaperForm.addEventListener("submit", async (e) => {
             e.preventDefault();
 
             if (isUploading || !currentUser) return;
+            resetFormErrors();
 
             const titleVal = paperTitleInput.value.trim();
             const courseCodeVal = courseCodeInput ? courseCodeInput.value.trim() : "";
@@ -591,8 +592,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
             try {
                 isUploading = true;
+                setModalLoadingLock(uploadPaperModal, true);
                 submitUploadBtn.disabled = true;
                 if (cancelUploadBtn) cancelUploadBtn.disabled = true;
+                if (closeUploadModalBtn) closeUploadModalBtn.disabled = true;
                 submitUploadBtn.classList.add("btn-loading");
                 if (submitUploadLabel) submitUploadLabel.innerHTML = `<span class="btn-spinner"></span> <span>Uploading Past Paper...</span>`;
 
@@ -600,7 +603,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 const storageResult = await uploadResourceFile(selectedFile, currentUser.uid);
 
                 // 2. Create Cloud Firestore Past Paper Document
-                const paperId = await createPastPaper({
+                await createPastPaper({
                     title: titleVal,
                     courseCode: courseCodeVal,
                     subject: subjectVal,
@@ -616,9 +619,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
 
                 isSuccess = true;
-                showToast("Past examination paper uploaded successfully!", true);
+                showToast("Uploaded successfully ✓", true);
 
-                closeUploadModal();
+                closeModal(uploadPaperModal);
                 await loadPastPapers();
 
             } catch (error) {
@@ -626,8 +629,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 showToast("Upload failed: " + (error.message || "Please check your connection."), false);
             } finally {
                 isUploading = false;
+                setModalLoadingLock(uploadPaperModal, false);
                 submitUploadBtn.disabled = false;
                 if (cancelUploadBtn) cancelUploadBtn.disabled = false;
+                if (closeUploadModalBtn) closeUploadModalBtn.disabled = false;
                 submitUploadBtn.classList.remove("btn-loading");
                 if (submitUploadLabel) submitUploadLabel.textContent = "Upload Past Paper";
 

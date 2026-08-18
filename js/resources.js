@@ -1,7 +1,7 @@
 /* ==========================================================================
    ACADEX SHARED RESOURCES V1 CONTROLLER (js/resources.js)
    Auth protection, resource filtering, Cloud Storage upload, Firestore CRUD,
-   private bookmark toggles, and modal UI controllers.
+   private bookmark toggles, and unified modal UI controllers.
    ========================================================================== */
 
 import { auth, checkUserProfile } from "./firebase-config.js";
@@ -11,6 +11,14 @@ import { uploadResourceFile } from "./services/storage.js";
 import { fetchUserBookmarks, addBookmark, removeBookmark } from "./services/bookmarks.js";
 import { initNavbar } from "./components/navbar.js";
 import { setupFileUpload } from "./components/file-upload.js";
+import { 
+    setupModal, 
+    openModal, 
+    closeModal, 
+    showToast, 
+    showConfirmModal, 
+    setModalLoadingLock 
+} from "./components/modal.js";
 import { escapeHtml } from "./utils.js";
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -52,32 +60,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     /* ----------------------------------------------------------------------
-       2. TOAST NOTIFICATION SYSTEM
-       ---------------------------------------------------------------------- */
-    const toastContainer = document.getElementById("toastContainer");
-
-    function showToast(message, isSuccess = true) {
-        if (!toastContainer) return;
-
-        toastContainer.innerHTML = "";
-        const toast = document.createElement("div");
-        toast.className = "toast";
-
-        const iconSvg = isSuccess
-            ? `<svg class="toast-icon toast-lime" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`
-            : `<svg class="toast-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>`;
-
-        toast.innerHTML = `${iconSvg}<span>${message}</span>`;
-        toastContainer.appendChild(toast);
-
-        setTimeout(() => {
-            toast.classList.add("toast-exit");
-            toast.addEventListener("animationend", () => toast.remove());
-        }, 3200);
-    }
-
-    /* ----------------------------------------------------------------------
-       3. STATE VARIABLES & DOM REFERENCES
+       2. STATE VARIABLES & DOM REFERENCES
        ---------------------------------------------------------------------- */
     let currentUser = null;
     let userBookmarksSet = new Set();
@@ -149,7 +132,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (drawerOverlay) drawerOverlay.addEventListener("click", () => toggleDrawer(false));
 
     /* ----------------------------------------------------------------------
-       4. AUTH STATE OBSERVER & PROFILE BINDING
+       3. AUTH STATE OBSERVER & PROFILE BINDING
        ---------------------------------------------------------------------- */
     onAuthStateChanged(auth, async (user) => {
         if (!user) {
@@ -176,6 +159,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
             // Load Resources Feed
             await loadResources();
+
+            // Check URL query parameters for auto-opening upload modal (e.g. ?upload=true)
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get("action") === "upload" || urlParams.get("upload") === "true" || urlParams.get("upload") === "1") {
+                openUploadModal();
+            }
 
         } catch (err) {
             console.error("Resources Auth Observer Error:", err);
@@ -212,7 +201,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     /* ----------------------------------------------------------------------
-       5. RESOURCE FEED FETCHING & RENDERING (REAL-TIME FIRESTORE LISTENER)
+       4. RESOURCE FEED FETCHING & RENDERING (REAL-TIME FIRESTORE LISTENER)
        ---------------------------------------------------------------------- */
     let resourcesUnsubscribe = null;
 
@@ -350,15 +339,13 @@ document.addEventListener("DOMContentLoaded", () => {
         resourcesGrid.querySelectorAll(".delete-btn").forEach(btn => {
             btn.addEventListener("click", async () => {
                 const resId = btn.getAttribute("data-id");
-                if (confirm("Are you sure you want to delete this resource and its associated file?")) {
-                    await handleResourceDelete(resId);
-                }
+                await handleResourceDelete(resId);
             });
         });
     }
 
     /* ----------------------------------------------------------------------
-       6. FILTER & SEARCH HANDLERS
+       5. FILTER & SEARCH HANDLERS
        ---------------------------------------------------------------------- */
     if (searchInput) searchInput.addEventListener("input", () => loadResources());
     if (categoryFilter) categoryFilter.addEventListener("change", () => loadResources());
@@ -367,7 +354,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (retryFetchBtn) retryFetchBtn.addEventListener("click", () => loadResources());
 
     /* ----------------------------------------------------------------------
-       7. BOOKMARK TOGGLE ENGINE
+       6. BOOKMARK TOGGLE ENGINE
        ---------------------------------------------------------------------- */
     async function handleBookmarkToggle(resourceId, btnElement) {
         if (!currentUser) return;
@@ -405,22 +392,35 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     /* ----------------------------------------------------------------------
-       8. RESOURCE DELETION HANDLER
+       7. UNIFIED DESTRUCTIVE DELETION MODAL HANDLER
        ---------------------------------------------------------------------- */
     async function handleResourceDelete(resourceId) {
+        const item = currentResourcesList.find(r => r.id === resourceId);
+        const itemTitle = item ? item.title : "this resource";
+
+        const confirmed = await showConfirmModal({
+            title: "Delete Resource?",
+            message: `Are you sure you want to delete "${itemTitle}"? This will permanently delete the file and resource details.`,
+            confirmText: "Delete Resource",
+            cancelText: "Cancel",
+            isDanger: true
+        });
+
+        if (!confirmed) return;
+
         try {
-            showToast("Deleting resource and storage file...");
+            showToast("Deleting resource...");
             await deleteResource(resourceId);
             showToast("Resource deleted successfully!", true);
             await loadResources();
         } catch (err) {
             console.error("Delete resource error:", err);
-            showToast("Failed to delete resource. " + (err.message || ""), false);
+            showToast("Failed to delete resource: " + (err.message || "Unknown error"), false);
         }
     }
 
     /* ----------------------------------------------------------------------
-       9. RESOURCE DETAILS MODAL HANDLER
+       8. RESOURCE DETAILS MODAL CONTROLLER
        ---------------------------------------------------------------------- */
     const resourceDetailsModal = document.getElementById("resourceDetailsModal");
     const closeDetailsModalBtn = document.getElementById("closeDetailsModalBtn");
@@ -435,6 +435,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const modalBookmarkText = document.getElementById("modalBookmarkText");
 
     let currentActiveDetailsId = null;
+
+    setupModal({
+        modalElement: resourceDetailsModal,
+        closeTriggers: [closeDetailsModalBtn]
+    });
 
     function openDetailsModal(resourceId) {
         const item = currentResourcesList.find(r => r.id === resourceId);
@@ -454,7 +459,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         updateModalBookmarkState();
 
-        resourceDetailsModal.style.display = "flex";
+        openModal(resourceDetailsModal);
     }
 
     function updateModalBookmarkState() {
@@ -464,16 +469,6 @@ document.addEventListener("DOMContentLoaded", () => {
         if (modalBookmarkBtn) {
             modalBookmarkBtn.classList.toggle("bookmarked", isBookmarked);
         }
-    }
-
-    if (closeDetailsModalBtn && resourceDetailsModal) {
-        closeDetailsModalBtn.addEventListener("click", () => {
-            resourceDetailsModal.style.display = "none";
-        });
-
-        resourceDetailsModal.addEventListener("click", (e) => {
-            if (e.target === resourceDetailsModal) resourceDetailsModal.style.display = "none";
-        });
     }
 
     if (modalBookmarkBtn) {
@@ -488,7 +483,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     /* ----------------------------------------------------------------------
-       10. UPLOAD RESOURCE MODAL CONTROLLER
+       9. UPLOAD RESOURCE MODAL CONTROLLER
        ---------------------------------------------------------------------- */
     const uploadResourceModal = document.getElementById("uploadResourceModal");
     const openUploadModalBtn = document.getElementById("openUploadModalBtn");
@@ -506,6 +501,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const resourceDescriptionInput = document.getElementById("resourceDescription");
     const fileInput = document.getElementById("fileInput");
     const fileUploadContainer = document.getElementById("fileUploadContainer");
+
     const fileUpload = setupFileUpload({
         containerElement: fileUploadContainer,
         fileInputElement: fileInput,
@@ -513,28 +509,33 @@ document.addEventListener("DOMContentLoaded", () => {
         allowedExtensions: [".pdf", ".docx", ".doc", ".zip", ".png", ".jpg", ".jpeg", ".webp"]
     });
 
+    setupModal({
+        modalElement: uploadResourceModal,
+        openTriggers: [openUploadModalBtn],
+        closeTriggers: [closeUploadModalBtn, cancelUploadBtn],
+        isUploadingGetter: () => isUploading
+    });
+
     function openUploadModal() {
         if (!uploadResourceModal) return;
-        uploadResourceForm.reset();
-        if (fileUpload) fileUpload.reset();
-        uploadResourceModal.style.display = "flex";
+        openModal(uploadResourceModal);
     }
 
-    function closeUploadModal() {
-        if (uploadResourceModal && !isUploading) {
-            uploadResourceModal.style.display = "none";
-        }
+    function resetFormErrors() {
+        if (!uploadResourceForm) return;
+        uploadResourceForm.querySelectorAll(".form-group").forEach(group => {
+            group.classList.remove("has-error");
+            const errEl = group.querySelector(".field-error-text");
+            if (errEl) errEl.style.display = "none";
+        });
     }
-
-    if (openUploadModalBtn) openUploadModalBtn.addEventListener("click", openUploadModal);
-    if (closeUploadModalBtn) closeUploadModalBtn.addEventListener("click", closeUploadModal);
-    if (cancelUploadBtn) cancelUploadBtn.addEventListener("click", closeUploadModal);
 
     if (uploadResourceForm) {
         uploadResourceForm.addEventListener("submit", async (e) => {
             e.preventDefault();
 
             if (isUploading || !currentUser) return;
+            resetFormErrors();
 
             const titleVal = resourceTitleInput.value.trim();
             const subjectVal = resourceSubjectInput.value.trim();
@@ -582,8 +583,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
             try {
                 isUploading = true;
+                setModalLoadingLock(uploadResourceModal, true);
                 submitUploadBtn.disabled = true;
                 if (cancelUploadBtn) cancelUploadBtn.disabled = true;
+                if (closeUploadModalBtn) closeUploadModalBtn.disabled = true;
                 submitUploadBtn.classList.add("btn-loading");
                 if (submitUploadLabel) submitUploadLabel.innerHTML = `<span class="btn-spinner"></span> <span>Uploading Resource...</span>`;
 
@@ -591,7 +594,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 const storageResult = await uploadResourceFile(selectedFile, currentUser.uid);
 
                 // 2. Create Cloud Firestore Resource Document
-                const resourceId = await createResource({
+                await createResource({
                     title: titleVal,
                     subject: subjectVal,
                     category: categoryVal,
@@ -606,9 +609,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
 
                 isSuccess = true;
-                showToast("Academic resource uploaded successfully!", true);
+                showToast("Uploaded successfully ✓", true);
 
-                closeUploadModal();
+                closeModal(uploadResourceModal);
                 await loadResources();
 
             } catch (error) {
@@ -616,8 +619,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 showToast("Upload failed: " + (error.message || "Please check your connection."), false);
             } finally {
                 isUploading = false;
+                setModalLoadingLock(uploadResourceModal, false);
                 submitUploadBtn.disabled = false;
                 if (cancelUploadBtn) cancelUploadBtn.disabled = false;
+                if (closeUploadModalBtn) closeUploadModalBtn.disabled = false;
                 submitUploadBtn.classList.remove("btn-loading");
                 if (submitUploadLabel) submitUploadLabel.textContent = "Upload Resource";
 
