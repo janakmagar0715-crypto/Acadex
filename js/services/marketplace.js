@@ -1,125 +1,119 @@
 /* ==========================================================================
-   ACADEX MARKETPLACE SERVICE (js/services/marketplace.js)
-   CRUD operations for student marketplace listings (books, gear, devices).
-   Includes automatic Cloud Storage cleanup guards upon creation failure or deletion.
+   ACADEX MARKETPLACE SUPABASE SERVICE (js/services/marketplace.js)
+   CRUD operations for student marketplace listings using Supabase DB & Storage.
+   Integrates with Firebase Auth for user UIDs while storing all marketplace
+   data exclusively in Supabase.
    ========================================================================== */
 
-import { auth, db } from "../firebase-config.js";
+import { supabase } from "../supabase-config.js";
+import { auth } from "../firebase-config.js";
 import { deleteStorageFile } from "./storage.js";
-import {
-    collection,
-    doc,
-    addDoc,
-    getDoc,
-    getDocs,
-    updateDoc,
-    deleteDoc,
-    query,
-    where,
-    orderBy,
-    limit,
-    serverTimestamp,
-    onSnapshot
-} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
-const MARKETPLACE_COLLECTION = "marketplace_items";
+const MARKETPLACE_TABLE = "marketplace_items";
 
 /**
- * Real-time subscription listener for marketplace_items collection.
+ * Fetches available marketplace listings matching optional category & condition filters.
+ * Logs "Marketplace Supabase error:" and returns [] gracefully if query fails or table is missing.
  * @param {Object} options 
- * @param {Function} callback 
- * @returns {Function} Unsubscribe function
- */
-export function subscribeMarketplaceItems({ category, status = "available", limitCount = 30 } = {}, callback) {
-    try {
-        const colRef = collection(db, MARKETPLACE_COLLECTION);
-        const queryConstraints = [where("status", "==", status)];
-
-        if (category && category !== "all") {
-            queryConstraints.push(where("category", "==", category));
-        }
-
-        queryConstraints.push(orderBy("createdAt", "desc"));
-        queryConstraints.push(limit(limitCount));
-
-        const q = query(colRef, ...queryConstraints);
-
-        return onSnapshot(q, (snapshot) => {
-            const items = [];
-            snapshot.forEach(docSnap => {
-                items.push({
-                    id: docSnap.id,
-                    ...docSnap.data()
-                });
-            });
-            callback(items);
-        }, (error) => {
-            console.error("Real-time marketplace subscription error:", error);
-            callback([], error);
-        });
-    } catch (error) {
-        console.error("Error setting up real-time marketplace subscription:", error);
-        throw error;
-    }
-}
-
-/**
- * Fetches available marketplace listings matching optional category filters.
- * @param {Object} options 
+ * @param {string} [options.category="all"]
+ * @param {string} [options.condition="all"]
+ * @param {string} [options.status="available"]
+ * @param {number} [options.limitCount=30]
  * @returns {Promise<Array<Object>>}
  */
-export async function fetchMarketplaceItems({ category, status = "available", limitCount = 20 } = {}) {
+export async function fetchMarketplaceItems({ category, condition, status = "available", limitCount = 30 } = {}) {
     try {
-        const colRef = collection(db, MARKETPLACE_COLLECTION);
-        const queryConstraints = [where("status", "==", status)];
+        let query = supabase
+            .from(MARKETPLACE_TABLE)
+            .select("*")
+            .order("created_at", { ascending: false })
+            .limit(limitCount);
 
-        if (category && category !== "all") {
-            queryConstraints.push(where("category", "==", category));
+        if (status && status !== "all") {
+            query = query.eq("status", status);
         }
 
-        queryConstraints.push(orderBy("createdAt", "desc"));
-        queryConstraints.push(limit(limitCount));
+        if (category && category !== "all") {
+            query = query.eq("category", category);
+        }
 
-        const q = query(colRef, ...queryConstraints);
-        const snapshot = await getDocs(q);
+        if (condition && condition !== "all") {
+            query = query.eq("condition", condition);
+        }
 
-        const items = [];
-        snapshot.forEach(docSnap => {
-            items.push({
-                id: docSnap.id,
-                ...docSnap.data()
-            });
-        });
+        const { data, error } = await query;
 
-        return items;
+        if (error) {
+            console.error("Marketplace Supabase error:", error);
+            return [];
+        }
+
+        return (data || []).map(item => ({
+            id: item.id,
+            title: item.title || "",
+            description: item.description || "",
+            category: item.category || "study",
+            price: Number(item.price) || 0,
+            condition: item.condition || "good",
+            contactNumber: item.contact_number || item.contactNumber || "",
+            imageURL: item.image_url || item.imageURL || "",
+            storagePath: item.storage_path || item.storagePath || "",
+            sellerUid: item.seller_uid || item.sellerUid || "",
+            sellerName: item.seller_name || item.sellerName || "Student",
+            status: item.status || "available",
+            createdAt: item.created_at || item.createdAt || new Date().toISOString()
+        }));
     } catch (error) {
-        console.error("Error fetching marketplace items:", error);
-        throw error;
+        console.error("Marketplace Supabase error:", error);
+        return [];
     }
 }
 
 /**
- * Fetches a single marketplace listing document by ID.
+ * Fetches a single marketplace listing by ID from Supabase.
  * @param {string} itemId 
  * @returns {Promise<Object|null>}
  */
 export async function fetchMarketplaceItemById(itemId) {
     if (!itemId) return null;
     try {
-        const docRef = doc(db, MARKETPLACE_COLLECTION, itemId);
-        const snap = await getDoc(docRef);
-        return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+        const { data, error } = await supabase
+            .from(MARKETPLACE_TABLE)
+            .select("*")
+            .eq("id", itemId)
+            .single();
+
+        if (error) {
+            console.error("Marketplace Supabase error:", error);
+            return null;
+        }
+
+        return {
+            id: data.id,
+            title: data.title || "",
+            description: data.description || "",
+            category: data.category || "study",
+            price: Number(data.price) || 0,
+            condition: data.condition || "good",
+            contactNumber: data.contact_number || data.contactNumber || "",
+            imageURL: data.image_url || data.imageURL || "",
+            storagePath: data.storage_path || data.storagePath || "",
+            sellerUid: data.seller_uid || data.sellerUid || "",
+            sellerName: data.seller_name || data.sellerName || "Student",
+            status: data.status || "available",
+            createdAt: data.created_at || data.createdAt || new Date().toISOString()
+        };
     } catch (error) {
-        console.error(`Error fetching marketplace item ${itemId}:`, error);
+        console.error("Marketplace Supabase error:", error);
         throw error;
     }
 }
 
 /**
- * Creates a new marketplace listing (excludes seller email for user privacy).
- * Automatically cleans up uploaded Storage image if Firestore creation fails!
+ * Creates a new marketplace listing in Supabase DB.
+ * Automatically cleans up uploaded Storage image if database insertion fails.
  * @param {Object} itemData 
- * @returns {Promise<string>} Document ID
+ * @returns {Promise<string>} Created Record ID
  */
 export async function createMarketplaceItem(itemData) {
     const user = auth.currentUser;
@@ -137,38 +131,39 @@ export async function createMarketplaceItem(itemData) {
         category: itemData.category || "study",
         price: Number(itemData.price) || 0,
         condition: itemData.condition || "good",
-        contactNumber: (itemData.contactNumber || "").trim(),
-        imageURL: itemData.imageURL || "",
-        storagePath: itemData.storagePath || "",
-        sellerUid: user.uid,
-        sellerName: itemData.sellerName || user.displayName || "Student",
-        status: "available",
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
+        contact_number: (itemData.contactNumber || "").trim(),
+        image_url: itemData.imageURL || "",
+        storage_path: itemData.storagePath || "",
+        seller_uid: user.uid,
+        seller_name: itemData.sellerName || user.displayName || "Student",
+        status: "available"
     };
 
     try {
-        const colRef = collection(db, MARKETPLACE_COLLECTION);
-        const docRef = await addDoc(colRef, payload);
-        return docRef.id;
-    } catch (error) {
-        console.error("Firestore Marketplace Creation Error! Initiating Storage cleanup guard...", error);
-        
-        // Automatic Storage Cleanup if Firestore write fails after Storage upload
-        if (itemData.storagePath) {
-            try {
-                await deleteStorageFile(itemData.storagePath);
-                console.log("Cleanup Guard: Orphaned Storage image successfully deleted.");
-            } catch (cleanupErr) {
-                console.error("Cleanup Guard Error deleting storage image:", cleanupErr);
+        const { data, error } = await supabase
+            .from(MARKETPLACE_TABLE)
+            .insert([payload])
+            .select();
+
+        if (error) {
+            console.error("Marketplace Supabase error:", error);
+            if (itemData.storagePath) {
+                try {
+                    await deleteStorageFile(itemData.storagePath);
+                } catch (cleanupErr) {}
             }
+            throw new Error("Could not publish listing to Supabase. " + (error.message || "Please check your Supabase table setup."));
         }
+
+        return data && data[0] ? data[0].id : null;
+    } catch (error) {
+        console.error("Marketplace Supabase error:", error);
         throw error;
     }
 }
 
 /**
- * Updates a marketplace listing (preserves sellerUid and createdAt).
+ * Updates an existing marketplace listing in Supabase DB.
  * @param {string} itemId 
  * @param {Object} updateFields 
  */
@@ -176,23 +171,38 @@ export async function updateMarketplaceItem(itemId, updateFields = {}) {
     const user = auth.currentUser;
     if (!user) throw new Error("Authentication required to update item.");
 
-    // Strip protected immutable fields
-    const { sellerUid, createdAt, id, storagePath, ...allowedFields } = updateFields;
+    const payload = {};
+    if (updateFields.title !== undefined) payload.title = updateFields.title.trim();
+    if (updateFields.description !== undefined) payload.description = updateFields.description.trim();
+    if (updateFields.category !== undefined) payload.category = updateFields.category;
+    if (updateFields.price !== undefined) payload.price = Number(updateFields.price);
+    if (updateFields.condition !== undefined) payload.condition = updateFields.condition;
+    if (updateFields.contactNumber !== undefined) payload.contact_number = updateFields.contactNumber.trim();
+    if (updateFields.imageURL !== undefined) payload.image_url = updateFields.imageURL;
+    if (updateFields.storagePath !== undefined) payload.storage_path = updateFields.storagePath;
+    if (updateFields.status !== undefined) payload.status = updateFields.status;
+
+    payload.updated_at = new Date().toISOString();
 
     try {
-        const docRef = doc(db, MARKETPLACE_COLLECTION, itemId);
-        await updateDoc(docRef, {
-            ...allowedFields,
-            updatedAt: serverTimestamp()
-        });
+        const { error } = await supabase
+            .from(MARKETPLACE_TABLE)
+            .update(payload)
+            .eq("id", itemId)
+            .eq("seller_uid", user.uid);
+
+        if (error) {
+            console.error("Marketplace Supabase error:", error);
+            throw error;
+        }
     } catch (error) {
-        console.error(`Error updating marketplace item ${itemId}:`, error);
+        console.error("Marketplace Supabase error:", error);
         throw error;
     }
 }
 
 /**
- * Deletes a marketplace listing document AND its associated Storage image.
+ * Deletes a marketplace listing from Supabase DB and its associated file from Supabase Storage.
  * @param {string} itemId 
  */
 export async function deleteMarketplaceItem(itemId) {
@@ -200,17 +210,24 @@ export async function deleteMarketplaceItem(itemId) {
     if (!user) throw new Error("Authentication required to delete item.");
 
     try {
-        // Fetch item document first to retrieve storagePath
+        // Fetch item first to retrieve storage_path
         const item = await fetchMarketplaceItemById(itemId);
         if (item && item.storagePath) {
             await deleteStorageFile(item.storagePath);
         }
 
-        const docRef = doc(db, MARKETPLACE_COLLECTION, itemId);
-        await deleteDoc(docRef);
-        console.log(`Marketplace Item ${itemId} and storage image deleted successfully.`);
+        const { error } = await supabase
+            .from(MARKETPLACE_TABLE)
+            .delete()
+            .eq("id", itemId)
+            .eq("seller_uid", user.uid);
+
+        if (error) {
+            console.error("Marketplace Supabase error:", error);
+            throw error;
+        }
     } catch (error) {
-        console.error(`Error deleting marketplace item ${itemId}:`, error);
+        console.error("Marketplace Supabase error:", error);
         throw error;
     }
 }

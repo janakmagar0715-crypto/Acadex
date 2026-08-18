@@ -1,13 +1,18 @@
 /* ==========================================================================
    ACADEX STUDENT MARKETPLACE V1 CONTROLLER (js/marketplace.js)
    Auth protection, search/filtering, Cloud Storage image upload,
-   Firestore CRUD, contact seller modal, private bookmark toggles,
+   Supabase DB CRUD, contact seller modal, private bookmark toggles,
    and unified modal UI controllers.
    ========================================================================== */
 
 import { auth, checkUserProfile } from "./firebase-config.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
-import { fetchMarketplaceItems, createMarketplaceItem, deleteMarketplaceItem } from "./services/marketplace.js";
+import { 
+    fetchMarketplaceItems, 
+    createMarketplaceItem, 
+    updateMarketplaceItem,
+    deleteMarketplaceItem 
+} from "./services/marketplace.js";
 import { uploadResourceFile } from "./services/storage.js";
 import { fetchUserBookmarks, addBookmark, removeBookmark } from "./services/bookmarks.js";
 import { initNavbar } from "./components/navbar.js";
@@ -67,6 +72,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let userBookmarksSet = new Set();
     let currentItemsList = [];
     let isUploading = false;
+    let editingItemId = null; // null for new listing, string ID for edit mode
 
     const marketplaceGrid = document.getElementById("marketplaceGrid");
     const emptyState = document.getElementById("emptyState");
@@ -157,7 +163,7 @@ document.addEventListener("DOMContentLoaded", () => {
             // Fetch user's bookmarks to sync active bookmark button states
             await loadUserBookmarks(user.uid);
 
-            // Load Marketplace Feed
+            // Load Marketplace Feed from Supabase
             await loadMarketplaceItems();
 
             // Check URL query parameters for auto-opening upload modal (e.g. ?upload=true)
@@ -201,7 +207,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     /* ----------------------------------------------------------------------
-       4. MARKETPLACE FEED FETCHING & RENDERING
+       4. MARKETPLACE FEED FETCHING & RENDERING (SUPABASE DB)
        ---------------------------------------------------------------------- */
     async function loadMarketplaceItems() {
         if (!marketplaceGrid) return;
@@ -223,12 +229,12 @@ document.addEventListener("DOMContentLoaded", () => {
         try {
             const fetched = await fetchMarketplaceItems({
                 category: categoryVal,
+                condition: conditionVal,
                 limitCount: 30
             });
 
-            // Client-side multi-field filter
+            // Client-side multi-field search filter
             currentItemsList = fetched.filter(item => {
-                if (conditionVal !== "all" && item.condition !== conditionVal) return false;
                 if (searchQuery) {
                     const titleMatch = (item.title || "").toLowerCase().includes(searchQuery);
                     const descMatch = (item.description || "").toLowerCase().includes(searchQuery);
@@ -246,7 +252,7 @@ document.addEventListener("DOMContentLoaded", () => {
             renderMarketplaceGrid(currentItemsList);
 
         } catch (error) {
-            console.error("Error loading marketplace feed:", error);
+            console.error("Marketplace Supabase error:", error);
             marketplaceGrid.style.display = "none";
             if (errorState) errorState.style.display = "flex";
         }
@@ -275,7 +281,12 @@ document.addEventListener("DOMContentLoaded", () => {
                         </div>
                         <div class="resource-card-header">
                             <span class="resource-type-badge ${conditionClass}">${escapeHtml((item.condition || "Good").toUpperCase())}</span>
-                            ${isOwner ? `<button class="btn-icon-secondary delete-btn" data-id="${escapeHtml(item.id)}" aria-label="Delete item" title="Delete"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>` : ''}
+                            ${isOwner ? `
+                                <div style="display:flex; align-items:center; gap:4px;">
+                                    <button class="btn-icon-secondary edit-btn" data-id="${escapeHtml(item.id)}" aria-label="Edit item" title="Edit"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></button>
+                                    <button class="btn-icon-secondary delete-btn" data-id="${escapeHtml(item.id)}" aria-label="Delete item" title="Delete"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>
+                                </div>
+                            ` : ''}
                         </div>
                         <h3 class="resource-title" style="margin-top: 8px;">${escapeHtml(item.title)}</h3>
                         <div class="resource-meta-text">Seller: ${escapeHtml(item.sellerName || 'Student')}</div>
@@ -304,6 +315,13 @@ document.addEventListener("DOMContentLoaded", () => {
             btn.addEventListener("click", () => {
                 const itemId = btn.getAttribute("data-id");
                 openContactModal(itemId);
+            });
+        });
+
+        marketplaceGrid.querySelectorAll(".edit-btn").forEach(btn => {
+            btn.addEventListener("click", () => {
+                const itemId = btn.getAttribute("data-id");
+                openEditModal(itemId);
             });
         });
 
@@ -356,13 +374,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 showToast("Item saved to bookmarks!", true);
             }
         } catch (err) {
-            console.error("Bookmark toggle error:", err);
+            console.error("Marketplace Supabase error:", err);
             showToast("Could not update bookmark. Please try again.", false);
         }
     }
 
     /* ----------------------------------------------------------------------
-       7. UNIFIED DESTRUCTIVE DELETION MODAL HANDLER
+       7. UNIFIED DESTRUCTIVE DELETION MODAL HANDLER (SUPABASE DB)
        ---------------------------------------------------------------------- */
     async function handleItemDelete(itemId) {
         const item = currentItemsList.find(i => i.id === itemId);
@@ -370,7 +388,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const confirmed = await showConfirmModal({
             title: "Delete Listing?",
-            message: `Are you sure you want to delete "${itemTitle}"? This will permanently remove the item from the student marketplace.`,
+            message: `Are you sure you want to delete "${itemTitle}"? This will permanently remove the item from Supabase marketplace.`,
             confirmText: "Delete Listing",
             cancelText: "Cancel",
             isDanger: true
@@ -384,7 +402,7 @@ document.addEventListener("DOMContentLoaded", () => {
             showToast("Listing deleted successfully!", true);
             await loadMarketplaceItems();
         } catch (err) {
-            console.error("Delete marketplace item error:", err);
+            console.error("Marketplace Supabase error:", err);
             showToast("Failed to delete item: " + (err.message || "Unknown error"), false);
         }
     }
@@ -421,7 +439,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     /* ----------------------------------------------------------------------
-       9. LIST AN ITEM MODAL CONTROLLER
+       9. LIST / EDIT AN ITEM MODAL CONTROLLER (SUPABASE DB)
        ---------------------------------------------------------------------- */
     const uploadItemModal = document.getElementById("uploadItemModal");
     const openUploadModalBtn = document.getElementById("openUploadModalBtn");
@@ -430,6 +448,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const uploadItemForm = document.getElementById("uploadItemForm");
     const submitUploadBtn = document.getElementById("submitUploadBtn");
     const submitUploadLabel = document.getElementById("submitUploadLabel");
+    const modalTitleEl = uploadItemModal ? uploadItemModal.querySelector(".modal-title") : null;
 
     const itemTitleInput = document.getElementById("itemTitle");
     const itemPriceInput = document.getElementById("itemPrice");
@@ -451,11 +470,40 @@ document.addEventListener("DOMContentLoaded", () => {
         modalElement: uploadItemModal,
         openTriggers: [openUploadModalBtn],
         closeTriggers: [closeUploadModalBtn, cancelUploadBtn],
-        isUploadingGetter: () => isUploading
+        isUploadingGetter: () => isUploading,
+        onClose: () => {
+            editingItemId = null;
+            if (modalTitleEl) modalTitleEl.textContent = "List an Item for Sale";
+            if (submitUploadLabel) submitUploadLabel.textContent = "Publish Listing";
+        }
     });
 
     function openUploadModal() {
         if (!uploadItemModal) return;
+        editingItemId = null;
+        if (modalTitleEl) modalTitleEl.textContent = "List an Item for Sale";
+        if (submitUploadLabel) submitUploadLabel.textContent = "Publish Listing";
+        uploadItemForm.reset();
+        if (fileUpload) fileUpload.reset();
+        openModal(uploadItemModal);
+    }
+
+    function openEditModal(itemId) {
+        const item = currentItemsList.find(i => i.id === itemId);
+        if (!item || !uploadItemModal) return;
+
+        editingItemId = itemId;
+        if (modalTitleEl) modalTitleEl.textContent = "Edit Marketplace Listing";
+        if (submitUploadLabel) submitUploadLabel.textContent = "Save Changes";
+
+        resetFormErrors();
+        if (itemTitleInput) itemTitleInput.value = item.title || "";
+        if (itemPriceInput) itemPriceInput.value = item.price || 0;
+        if (itemCategoryInput) itemCategoryInput.value = item.category || "study";
+        if (itemConditionInput) itemConditionInput.value = item.condition || "good";
+        if (contactNumberInput) contactNumberInput.value = item.contactNumber || "";
+        if (itemDescriptionInput) itemDescriptionInput.value = item.description || "";
+
         openModal(uploadItemModal);
     }
 
@@ -510,7 +558,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 hasError = true;
             }
 
-            if (!selectedFile) {
+            // Require photo for new items, optional for edits if keeping existing
+            if (!editingItemId && !selectedFile) {
                 if (fileUpload) fileUpload.showError("Please select or drop an item photo.");
                 hasError = true;
             }
@@ -526,33 +575,56 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (cancelUploadBtn) cancelUploadBtn.disabled = true;
                 if (closeUploadModalBtn) closeUploadModalBtn.disabled = true;
                 submitUploadBtn.classList.add("btn-loading");
-                if (submitUploadLabel) submitUploadLabel.innerHTML = `<span class="btn-spinner"></span> <span>Publishing Listing...</span>`;
+                
+                const actionText = editingItemId ? "Updating Listing..." : "Publishing Listing...";
+                if (submitUploadLabel) submitUploadLabel.innerHTML = `<span class="btn-spinner"></span> <span>${actionText}</span>`;
 
-                // 1. Upload Image to Firebase Storage
-                const storageResult = await uploadResourceFile(selectedFile, currentUser.uid);
+                let storageResult = null;
+                if (selectedFile) {
+                    // Upload Image to Supabase Storage
+                    storageResult = await uploadResourceFile(selectedFile, currentUser.uid);
+                }
 
-                // 2. Create Cloud Firestore Marketplace Document
-                await createMarketplaceItem({
-                    title: titleVal,
-                    price: priceVal,
-                    category: categoryVal,
-                    condition: conditionVal,
-                    contactNumber: phoneVal,
-                    description: descriptionVal,
-                    imageURL: storageResult.fileURL,
-                    storagePath: storageResult.storagePath,
-                    sellerName: currentUser.displayName || "Student"
-                });
+                if (editingItemId) {
+                    // Update existing item in Supabase DB
+                    const updatePayload = {
+                        title: titleVal,
+                        price: priceVal,
+                        category: categoryVal,
+                        condition: conditionVal,
+                        contactNumber: phoneVal,
+                        description: descriptionVal
+                    };
+                    if (storageResult) {
+                        updatePayload.imageURL = storageResult.fileURL;
+                        updatePayload.storagePath = storageResult.storagePath;
+                    }
+
+                    await updateMarketplaceItem(editingItemId, updatePayload);
+                    showToast("Listing updated successfully ✓", true);
+                } else {
+                    // Create new item in Supabase DB
+                    await createMarketplaceItem({
+                        title: titleVal,
+                        price: priceVal,
+                        category: categoryVal,
+                        condition: conditionVal,
+                        contactNumber: phoneVal,
+                        description: descriptionVal,
+                        imageURL: storageResult ? storageResult.fileURL : "",
+                        storagePath: storageResult ? storageResult.storagePath : "",
+                        sellerName: currentUser.displayName || "Student"
+                    });
+                    showToast("Uploaded successfully ✓", true);
+                }
 
                 isSuccess = true;
-                showToast("Uploaded successfully ✓", true);
-
                 closeModal(uploadItemModal);
                 await loadMarketplaceItems();
 
             } catch (error) {
-                console.error("Marketplace Upload Process Error:", error);
-                showToast("Upload failed: " + (error.message || "Please check your connection."), false);
+                console.error("Marketplace Supabase error:", error);
+                showToast("Operation failed: " + (error.message || "Please check your Supabase database connection."), false);
             } finally {
                 isUploading = false;
                 setModalLoadingLock(uploadItemModal, false);
@@ -560,9 +632,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (cancelUploadBtn) cancelUploadBtn.disabled = false;
                 if (closeUploadModalBtn) closeUploadModalBtn.disabled = false;
                 submitUploadBtn.classList.remove("btn-loading");
-                if (submitUploadLabel) submitUploadLabel.textContent = "Publish Listing";
+                
+                const defaultLabel = editingItemId ? "Save Changes" : "Publish Listing";
+                if (submitUploadLabel) submitUploadLabel.textContent = defaultLabel;
 
                 if (isSuccess) {
+                    editingItemId = null;
                     uploadItemForm.reset();
                     if (fileUpload) fileUpload.reset();
                 }
