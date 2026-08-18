@@ -1,0 +1,45 @@
+/* ==========================================================================
+   ACADEX SAVED ITEMS PAGE STYLES (css/saved-items.css)
+   Clean grid layout, metadata tags, empty state & responsive styling
+   ========================================================================== */
+
+.meta-details-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  font-size: 12.5px;
+  color: var(--text-muted);
+  margin-top: 8px;
+}
+
+.meta-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: 6px;
+  background: var(--surface-secondary);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.resource-meta-text {
+  font-size: 12.5px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.state-card {
+  padding: 56px 24px;
+  margin: 24px 0;
+}
+
+@media (max-width: 768px) {
+  .meta-details-row {
+    font-size: 11.5px;
+    gap: 6px 10px;
+  }
+}

@@ -9,9 +9,12 @@ import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/
 import { fetchMarketplaceItems, createMarketplaceItem, deleteMarketplaceItem } from "./services/marketplace.js";
 import { uploadResourceFile } from "./services/storage.js";
 import { fetchUserBookmarks, addBookmark, removeBookmark } from "./services/bookmarks.js";
+import { initNavbar } from "./components/navbar.js";
+import { setupFileUpload } from "./components/file-upload.js";
 import { escapeHtml } from "./utils.js";
 
 document.addEventListener("DOMContentLoaded", () => {
+    initNavbar();
 
     /* ----------------------------------------------------------------------
        1. THEME CONTROLLER
@@ -338,6 +341,11 @@ document.addEventListener("DOMContentLoaded", () => {
     async function handleBookmarkToggle(itemId, btnElement) {
         if (!currentUser) return;
 
+        if (btnElement) {
+            btnElement.classList.add("bookmark-pop");
+            btnElement.addEventListener("animationend", () => btnElement.classList.remove("bookmark-pop"), { once: true });
+        }
+
         const isCurrentlyBookmarked = userBookmarksSet.has(itemId);
         const item = currentItemsList.find(i => i.id === itemId);
 
@@ -435,9 +443,18 @@ document.addEventListener("DOMContentLoaded", () => {
     const itemDescriptionInput = document.getElementById("itemDescription");
     const fileInput = document.getElementById("fileInput");
 
+    const fileUploadContainer = document.getElementById("fileUploadContainer");
+    const fileUpload = setupFileUpload({
+        containerElement: fileUploadContainer,
+        fileInputElement: fileInput,
+        maxSizeMB: 10,
+        allowedExtensions: [".png", ".jpg", ".jpeg", ".webp"]
+    });
+
     function openUploadModal() {
         if (!uploadItemModal) return;
         uploadItemForm.reset();
+        if (fileUpload) fileUpload.reset();
         uploadItemModal.style.display = "flex";
     }
 
@@ -463,30 +480,53 @@ document.addEventListener("DOMContentLoaded", () => {
             const conditionVal = itemConditionInput.value;
             const phoneVal = contactNumberInput.value.trim();
             const descriptionVal = itemDescriptionInput.value.trim();
-            const selectedFile = fileInput.files[0];
+            const selectedFile = fileUpload ? fileUpload.getSelectedFile() : (fileInput.files ? fileInput.files[0] : null);
 
-            if (!titleVal || !phoneVal || !selectedFile) {
-                showToast("Please fill in all required fields and select an image.", false);
-                return;
+            let hasError = false;
+            if (!titleVal) {
+                const parent = itemTitleInput.closest(".form-group");
+                if (parent) {
+                    parent.classList.add("has-error");
+                    const errEl = parent.querySelector(".field-error-text");
+                    if (errEl) {
+                        errEl.innerHTML = `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><span>Please enter an item title.</span>`;
+                        errEl.style.display = "flex";
+                    }
+                }
+                hasError = true;
             }
 
-            // Validate File Size (<10MB)
-            if (selectedFile.size > 10 * 1024 * 1024) {
-                showToast("Image size exceeds the 10 MB limit.", false);
-                return;
+            if (!phoneVal) {
+                const parent = contactNumberInput.closest(".form-group");
+                if (parent) {
+                    parent.classList.add("has-error");
+                    const errEl = parent.querySelector(".field-error-text");
+                    if (errEl) {
+                        errEl.innerHTML = `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><span>Please enter a contact phone or WhatsApp number.</span>`;
+                        errEl.style.display = "flex";
+                    }
+                }
+                hasError = true;
             }
+
+            if (!selectedFile) {
+                if (fileUpload) fileUpload.showError("Please select or drop an item photo.");
+                hasError = true;
+            }
+
+            if (hasError) return;
+
+            let isSuccess = false;
 
             try {
                 isUploading = true;
                 submitUploadBtn.disabled = true;
                 if (cancelUploadBtn) cancelUploadBtn.disabled = true;
-                if (submitUploadLabel) submitUploadLabel.textContent = "Uploading image to Cloud Storage...";
+                submitUploadBtn.classList.add("btn-loading");
+                if (submitUploadLabel) submitUploadLabel.innerHTML = `<span class="btn-spinner"></span> <span>Publishing Listing...</span>`;
 
                 // 1. Upload Image to Firebase Storage
                 const storageResult = await uploadResourceFile(selectedFile, currentUser.uid);
-                console.log("Storage Image Upload Succeeded:", storageResult);
-
-                if (submitUploadLabel) submitUploadLabel.textContent = "Creating marketplace listing...";
 
                 // 2. Create Cloud Firestore Marketplace Document
                 const itemId = await createMarketplaceItem({
@@ -501,7 +541,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     sellerName: currentUser.displayName || "Student"
                 });
 
-                console.log("Firestore Marketplace Item Created:", itemId);
+                isSuccess = true;
                 showToast("Marketplace item listed successfully!", true);
 
                 closeUploadModal();
@@ -514,7 +554,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 isUploading = false;
                 submitUploadBtn.disabled = false;
                 if (cancelUploadBtn) cancelUploadBtn.disabled = false;
-                if (submitUploadLabel) submitUploadLabel.textContent = "Post Listing";
+                submitUploadBtn.classList.remove("btn-loading");
+                if (submitUploadLabel) submitUploadLabel.textContent = "Publish Listing";
+
+                if (isSuccess) {
+                    uploadItemForm.reset();
+                    if (fileUpload) fileUpload.reset();
+                }
             }
         });
     }

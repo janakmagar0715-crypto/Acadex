@@ -234,34 +234,72 @@ document.addEventListener("DOMContentLoaded", () => {
             const passVal = passwordInput ? passwordInput.value.trim() : "";
             const confirmPassVal = confirmPasswordInput ? confirmPasswordInput.value.trim() : "";
 
-            // Form validations
-            if (!nameVal || !emailVal || !passVal || !confirmPassVal) {
-                showToast("Please fill in all required fields.", false);
-                if (!nameVal && nameInput) nameInput.focus();
-                else if (!emailVal && emailInput) emailInput.focus();
-                else if (!passVal && passwordInput) passwordInput.focus();
-                else if (!confirmPassVal && confirmPasswordInput) confirmPasswordInput.focus();
-                return;
+            let hasError = false;
+            if (!nameVal && nameInput) {
+                const parent = nameInput.closest(".form-group");
+                if (parent) {
+                    parent.classList.add("has-error");
+                    const errEl = parent.querySelector(".field-error-text");
+                    if (errEl) {
+                        errEl.innerHTML = `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><span>Please enter your full name.</span>`;
+                        errEl.style.display = "flex";
+                    }
+                }
+                hasError = true;
             }
 
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(emailVal)) {
-                showToast("Please enter a valid email address.", false);
-                if (emailInput) emailInput.focus();
-                return;
+            if (!emailVal && emailInput) {
+                const parent = emailInput.closest(".form-group");
+                if (parent) {
+                    parent.classList.add("has-error");
+                    const errEl = parent.querySelector(".field-error-text");
+                    if (errEl) {
+                        errEl.innerHTML = `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><span>Please enter an email address.</span>`;
+                        errEl.style.display = "flex";
+                    }
+                }
+                hasError = true;
+            } else if (emailVal) {
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(emailVal) && emailInput) {
+                    const parent = emailInput.closest(".form-group");
+                    if (parent) {
+                        parent.classList.add("has-error");
+                        const errEl = parent.querySelector(".field-error-text");
+                        if (errEl) {
+                            errEl.innerHTML = `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><span>Please enter a valid email address.</span>`;
+                            errEl.style.display = "flex";
+                        }
+                    }
+                    hasError = true;
+                }
             }
 
-            if (passVal.length < 6) {
-                showToast("Password must be at least 6 characters long.", false);
-                if (passwordInput) passwordInput.focus();
-                return;
+            if (!passVal && passwordInput) {
+                const parent = passwordInput.closest(".form-group");
+                if (parent) {
+                    parent.classList.add("has-error");
+                    const errEl = parent.querySelector(".field-error-text");
+                    if (errEl) {
+                        errEl.innerHTML = `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><span>Please enter a password.</span>`;
+                        errEl.style.display = "flex";
+                    }
+                }
+                hasError = true;
+            } else if (passVal && passVal.length < 6 && passwordInput) {
+                const parent = passwordInput.closest(".form-group");
+                if (parent) {
+                    parent.classList.add("has-error");
+                    const errEl = parent.querySelector(".field-error-text");
+                    if (errEl) {
+                        errEl.innerHTML = `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><span>Password must be at least 6 characters long.</span>`;
+                        errEl.style.display = "flex";
+                    }
+                }
+                hasError = true;
             }
 
-            if (passVal !== confirmPassVal) {
-                showToast("Passwords do not match. Please check again.", false);
-                if (confirmPasswordInput) confirmPasswordInput.focus();
-                return;
-            }
+            if (hasError) return;
 
             const originalBtnHTML = submitRegisterBtn ? submitRegisterBtn.innerHTML : "";
 
@@ -269,7 +307,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 isAuthenticating = true;
                 if (submitRegisterBtn) {
                     submitRegisterBtn.disabled = true;
-                    submitRegisterBtn.innerHTML = "<span>Creating Account...</span>";
+                    submitRegisterBtn.classList.add("btn-loading");
+                    submitRegisterBtn.innerHTML = `<span class="btn-spinner"></span> <span>Creating Account...</span>`;
                 }
 
                 // 1. Create Firebase Auth User

@@ -14,9 +14,11 @@ import {
     orderBy, 
     serverTimestamp 
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+import { initNavbar } from "./components/navbar.js";
 import { escapeHtml } from "./utils.js";
 
 document.addEventListener("DOMContentLoaded", () => {
+    initNavbar();
 
     /* ----------------------------------------------------------------------
        1. THEME CONTROLLER
@@ -278,6 +280,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const cancelNoticeBtn = document.getElementById("cancelNoticeBtn");
     const postNoticeForm = document.getElementById("postNoticeForm");
 
+    const submitNoticeBtn = document.getElementById("submitNoticeBtn");
+    const submitNoticeLabel = document.getElementById("submitNoticeLabel");
+    let isSubmittingNotice = false;
+
     function openModal() {
         if (!postNoticeModal) return;
         postNoticeForm.reset();
@@ -285,7 +291,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function closeModal() {
-        if (postNoticeModal) postNoticeModal.style.display = "none";
+        if (postNoticeModal && !isSubmittingNotice) postNoticeModal.style.display = "none";
     }
 
     if (openPostNoticeBtn) openPostNoticeBtn.addEventListener("click", openModal);
@@ -295,19 +301,70 @@ document.addEventListener("DOMContentLoaded", () => {
     if (postNoticeForm) {
         postNoticeForm.addEventListener("submit", async (e) => {
             e.preventDefault();
-            if (!currentUser) return;
+            if (!currentUser || isSubmittingNotice) return;
 
-            const titleVal = document.getElementById("noticeTitle").value.trim();
-            const clubVal = document.getElementById("noticeClub").value.trim();
+            const titleInput = document.getElementById("noticeTitle");
+            const clubInput = document.getElementById("noticeClub");
             const categoryVal = document.getElementById("noticeCategory").value;
-            const descVal = document.getElementById("noticeDescription").value.trim();
+            const descInput = document.getElementById("noticeDescription");
 
-            if (!titleVal || !clubVal || !descVal) {
-                showToast("Please fill in all required fields.", false);
-                return;
+            const titleVal = titleInput.value.trim();
+            const clubVal = clubInput.value.trim();
+            const descVal = descInput.value.trim();
+
+            let hasError = false;
+            if (!titleVal) {
+                const parent = titleInput.closest(".form-group");
+                if (parent) {
+                    parent.classList.add("has-error");
+                    const errEl = parent.querySelector(".field-error-text");
+                    if (errEl) {
+                        errEl.innerHTML = `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><span>Please enter a notice or event title.</span>`;
+                        errEl.style.display = "flex";
+                    }
+                }
+                hasError = true;
             }
 
+            if (!clubVal) {
+                const parent = clubInput.closest(".form-group");
+                if (parent) {
+                    parent.classList.add("has-error");
+                    const errEl = parent.querySelector(".field-error-text");
+                    if (errEl) {
+                        errEl.innerHTML = `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><span>Please enter your club or organization name.</span>`;
+                        errEl.style.display = "flex";
+                    }
+                }
+                hasError = true;
+            }
+
+            if (!descVal) {
+                const parent = descInput.closest(".form-group");
+                if (parent) {
+                    parent.classList.add("has-error");
+                    const errEl = parent.querySelector(".field-error-text");
+                    if (errEl) {
+                        errEl.innerHTML = `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><span>Please provide event details or application link.</span>`;
+                        errEl.style.display = "flex";
+                    }
+                }
+                hasError = true;
+            }
+
+            if (hasError) return;
+
+            let isSuccess = false;
+
             try {
+                isSubmittingNotice = true;
+                if (submitNoticeBtn) {
+                    submitNoticeBtn.disabled = true;
+                    submitNoticeBtn.classList.add("btn-loading");
+                }
+                if (cancelNoticeBtn) cancelNoticeBtn.disabled = true;
+                if (submitNoticeLabel) submitNoticeLabel.innerHTML = `<span class="btn-spinner"></span> <span>Publishing Notice...</span>`;
+
                 const colRef = collection(db, "notices");
                 await addDoc(colRef, {
                     title: titleVal,
@@ -319,12 +376,25 @@ document.addEventListener("DOMContentLoaded", () => {
                     createdAt: serverTimestamp()
                 });
 
+                isSuccess = true;
                 showToast("Notice posted successfully!", true);
                 closeModal();
                 await loadNotices();
             } catch (err) {
                 console.error("Post notice error:", err);
                 showToast("Failed to post notice. Please try again.", false);
+            } finally {
+                isSubmittingNotice = false;
+                if (submitNoticeBtn) {
+                    submitNoticeBtn.disabled = false;
+                    submitNoticeBtn.classList.remove("btn-loading");
+                }
+                if (cancelNoticeBtn) cancelNoticeBtn.disabled = false;
+                if (submitNoticeLabel) submitNoticeLabel.textContent = "Publish Notice";
+
+                if (isSuccess) {
+                    postNoticeForm.reset();
+                }
             }
         });
     }

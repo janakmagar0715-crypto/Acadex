@@ -101,12 +101,14 @@
 
                     <div class="form-group name-row">
                         <div>
-                            <label for="firstName" class="form-label">First Name *</label>
+                            <label for="firstName" class="form-label">First Name <span class="required-star">*</span></label>
                             <input id="firstName" type="text" class="input-field" placeholder="e.g. Alex" required>
+                            <div class="field-error-text" style="display: none;"></div>
                         </div>
                         <div>
-                            <label for="lastName" class="form-label">Last Name *</label>
+                            <label for="lastName" class="form-label">Last Name <span class="required-star">*</span></label>
                             <input id="lastName" type="text" class="input-field" placeholder="e.g. Morgan" required>
+                            <div class="field-error-text" style="display: none;"></div>
                         </div>
                     </div>
                 </div>
@@ -119,7 +121,7 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="department" class="form-label">Department / Program *</label>
+                        <label for="department" class="form-label">Department / Program <span class="required-star">*</span></label>
                         <div class="select-wrapper">
                             <select id="department" class="select-field" required>
                                 <option value="" disabled selected>Select your department</option>
@@ -135,11 +137,12 @@
                                 <option value="Other">Other</option>
                             </select>
                         </div>
+                        <div class="field-error-text" style="display: none;"></div>
                     </div>
 
                     <div class="form-group name-row">
                         <div>
-                            <label for="year" class="form-label">Academic Year *</label>
+                            <label for="year" class="form-label">Academic Year <span class="required-star">*</span></label>
                             <div class="select-wrapper">
                                 <select id="year" class="select-field" required>
                                     <option value="" disabled selected>Select year</option>
@@ -150,10 +153,11 @@
                                     <option value="Other">Other</option>
                                 </select>
                             </div>
+                            <div class="field-error-text" style="display: none;"></div>
                         </div>
 
                         <div>
-                            <label for="semester" class="form-label">Semester *</label>
+                            <label for="semester" class="form-label">Semester <span class="required-star">*</span></label>
                             <div class="select-wrapper">
                                 <select id="semester" class="select-field" required>
                                     <option value="" disabled selected>Select semester</option>
@@ -168,6 +172,7 @@
                                     <option value="Other">Other</option>
                                 </select>
                             </div>
+                            <div class="field-error-text" style="display: none;"></div>
                         </div>
                     </div>
                 </div>

@@ -1,17 +1,20 @@
 /* ==========================================================================
-   ACADEX ACADEMIC RESOURCES V1 CONTROLLER (js/resources.js)
-   Auth protection, resource filtering, Firebase Storage upload, Firestore CRUD,
+   ACADEX SHARED RESOURCES V1 CONTROLLER (js/resources.js)
+   Auth protection, resource filtering, Cloud Storage upload, Firestore CRUD,
    private bookmark toggles, and modal UI controllers.
    ========================================================================== */
 
 import { auth, checkUserProfile } from "./firebase-config.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
-import { fetchResources, createResource, deleteResource, fetchResourceById, subscribeResources } from "./services/resources.js";
+import { subscribeResources, createResource, deleteResource } from "./services/resources.js";
 import { uploadResourceFile } from "./services/storage.js";
 import { fetchUserBookmarks, addBookmark, removeBookmark } from "./services/bookmarks.js";
+import { initNavbar } from "./components/navbar.js";
+import { setupFileUpload } from "./components/file-upload.js";
 import { escapeHtml } from "./utils.js";
 
 document.addEventListener("DOMContentLoaded", () => {
+    initNavbar();
 
     /* ----------------------------------------------------------------------
        1. THEME CONTROLLER
@@ -157,7 +160,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
         currentUser = user;
 
-        // Check if profile is complete
         try {
             const profileResult = await checkUserProfile(user.uid);
             if (!profileResult || !profileResult.profileComplete) {
@@ -214,21 +216,19 @@ document.addEventListener("DOMContentLoaded", () => {
        ---------------------------------------------------------------------- */
     let resourcesUnsubscribe = null;
 
-    function loadResources() {
+    async function loadResources() {
         if (!resourcesGrid) return;
 
-        if (resourcesUnsubscribe) {
-            resourcesUnsubscribe();
-            resourcesUnsubscribe = null;
+        // Show Skeleton Loader initially if empty
+        if (!resourcesUnsubscribe) {
+            resourcesGrid.style.display = "grid";
+            resourcesGrid.innerHTML = `
+                <div class="skeleton-card"><div class="skeleton-badge"></div><div class="skeleton-line title"></div><div class="skeleton-line meta"></div><div class="skeleton-actions"></div></div>
+                <div class="skeleton-card"><div class="skeleton-badge"></div><div class="skeleton-line title"></div><div class="skeleton-line meta"></div><div class="skeleton-actions"></div></div>
+                <div class="skeleton-card"><div class="skeleton-badge"></div><div class="skeleton-line title"></div><div class="skeleton-line meta"></div><div class="skeleton-actions"></div></div>
+            `;
         }
 
-        // Show Shimmer Skeleton
-        resourcesGrid.style.display = "grid";
-        resourcesGrid.innerHTML = `
-            <div class="skeleton-card"><div class="skeleton-badge"></div><div class="skeleton-line title"></div><div class="skeleton-line meta"></div><div class="skeleton-actions"></div></div>
-            <div class="skeleton-card"><div class="skeleton-badge"></div><div class="skeleton-line title"></div><div class="skeleton-line meta"></div><div class="skeleton-actions"></div></div>
-            <div class="skeleton-card"><div class="skeleton-badge"></div><div class="skeleton-line title"></div><div class="skeleton-line meta"></div><div class="skeleton-actions"></div></div>
-        `;
         if (emptyState) emptyState.style.display = "none";
         if (errorState) errorState.style.display = "none";
 
@@ -237,26 +237,34 @@ document.addEventListener("DOMContentLoaded", () => {
         const semVal = semesterFilter ? semesterFilter.value : "all";
         const searchQuery = searchInput ? searchInput.value.trim().toLowerCase() : "";
 
+        // Cancel previous snapshot listener if active
+        if (resourcesUnsubscribe) {
+            resourcesUnsubscribe();
+            resourcesUnsubscribe = null;
+        }
+
         try {
             resourcesUnsubscribe = subscribeResources({
                 category: categoryVal,
                 department: deptVal,
                 limitCount: 30
-            }, (fetched, error) => {
+            }, (fetchedResources, error) => {
                 if (error) {
-                    console.error("Real-time resources error:", error);
+                    console.error("Error in real-time resources subscription:", error);
                     resourcesGrid.style.display = "none";
                     if (errorState) errorState.style.display = "flex";
                     return;
                 }
 
-                // Client-side filter for semester and search query
-                currentResourcesList = fetched.filter(item => {
+                // Client-side filtering for search query and semester
+                currentResourcesList = fetchedResources.filter(item => {
                     if (semVal !== "all" && item.semester !== semVal) return false;
+
                     if (searchQuery) {
                         const titleMatch = (item.title || "").toLowerCase().includes(searchQuery);
                         const subjectMatch = (item.subject || "").toLowerCase().includes(searchQuery);
-                        return titleMatch || subjectMatch;
+                        const descMatch = (item.description || "").toLowerCase().includes(searchQuery);
+                        return titleMatch || subjectMatch || descMatch;
                     }
                     return true;
                 });
@@ -269,11 +277,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 if (emptyState) emptyState.style.display = "none";
                 if (errorState) errorState.style.display = "none";
+
                 renderResourcesGrid(currentResourcesList);
             });
-
-        } catch (error) {
-            console.error("Error establishing real-time resources feed:", error);
+        } catch (err) {
+            console.error("Failed to setup real-time resources listener:", err);
             resourcesGrid.style.display = "none";
             if (errorState) errorState.style.display = "flex";
         }
@@ -293,9 +301,10 @@ document.addEventListener("DOMContentLoaded", () => {
             const isBookmarked = userBookmarksSet.has(item.id);
             const isOwner = currentUser && item.uploaderUid === currentUser.uid;
 
-            let badgeClass = "";
+            let badgeClass = "badge-notes";
             if (item.category === "assignment") badgeClass = "badge-paper";
             else if (item.category === "project") badgeClass = "badge-project";
+            else if (item.category === "guide") badgeClass = "badge-guide";
 
             return `
                 <div class="resource-card" data-id="${escapeHtml(item.id)}">
@@ -363,6 +372,11 @@ document.addEventListener("DOMContentLoaded", () => {
     async function handleBookmarkToggle(resourceId, btnElement) {
         if (!currentUser) return;
 
+        if (btnElement) {
+            btnElement.classList.add("bookmark-pop");
+            btnElement.addEventListener("animationend", () => btnElement.classList.remove("bookmark-pop"), { once: true });
+        }
+
         const isCurrentlyBookmarked = userBookmarksSet.has(resourceId);
         const item = currentResourcesList.find(r => r.id === resourceId);
 
@@ -395,7 +409,7 @@ document.addEventListener("DOMContentLoaded", () => {
        ---------------------------------------------------------------------- */
     async function handleResourceDelete(resourceId) {
         try {
-            showToast("Deleting resource and file...");
+            showToast("Deleting resource and storage file...");
             await deleteResource(resourceId);
             showToast("Resource deleted successfully!", true);
             await loadResources();
@@ -428,10 +442,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
         currentActiveDetailsId = resourceId;
 
-        if (modalCategoryBadge) modalCategoryBadge.textContent = (item.category || "Notes").toUpperCase();
+        if (modalCategoryBadge) {
+            modalCategoryBadge.textContent = (item.category || "Notes").toUpperCase();
+        }
         if (modalTitle) modalTitle.textContent = item.title;
         if (modalMeta) modalMeta.textContent = `${item.subject} • ${item.department || 'General'} (${item.semester || ''})`;
-        if (modalDescription) modalDescription.textContent = item.description || "No additional description provided for this resource.";
+        if (modalDescription) modalDescription.textContent = item.description || "No description provided.";
         if (modalUploader) modalUploader.textContent = item.uploaderName || "Student";
         if (modalFileSize) modalFileSize.textContent = formatFileSize(item.fileSize);
         if (modalDownloadBtn) modalDownloadBtn.href = item.fileURL;
@@ -463,6 +479,8 @@ document.addEventListener("DOMContentLoaded", () => {
     if (modalBookmarkBtn) {
         modalBookmarkBtn.addEventListener("click", async () => {
             if (!currentActiveDetailsId) return;
+            modalBookmarkBtn.classList.add("bookmark-pop");
+            modalBookmarkBtn.addEventListener("animationend", () => modalBookmarkBtn.classList.remove("bookmark-pop"), { once: true });
             const cardBtn = resourcesGrid ? resourcesGrid.querySelector(`.bookmark-btn[data-id="${currentActiveDetailsId}"]`) : null;
             await handleBookmarkToggle(currentActiveDetailsId, cardBtn);
             updateModalBookmarkState();
@@ -487,10 +505,18 @@ document.addEventListener("DOMContentLoaded", () => {
     const resourceSemesterInput = document.getElementById("resourceSemester");
     const resourceDescriptionInput = document.getElementById("resourceDescription");
     const fileInput = document.getElementById("fileInput");
+    const fileUploadContainer = document.getElementById("fileUploadContainer");
+    const fileUpload = setupFileUpload({
+        containerElement: fileUploadContainer,
+        fileInputElement: fileInput,
+        maxSizeMB: 25,
+        allowedExtensions: [".pdf", ".docx", ".doc", ".zip", ".png", ".jpg", ".jpeg", ".webp"]
+    });
 
     function openUploadModal() {
         if (!uploadResourceModal) return;
         uploadResourceForm.reset();
+        if (fileUpload) fileUpload.reset();
         uploadResourceModal.style.display = "flex";
     }
 
@@ -516,18 +542,41 @@ document.addEventListener("DOMContentLoaded", () => {
             const departmentVal = resourceDepartmentInput.value;
             const semesterVal = resourceSemesterInput.value;
             const descriptionVal = resourceDescriptionInput.value.trim();
-            const selectedFile = fileInput.files[0];
+            const selectedFile = fileUpload ? fileUpload.getSelectedFile() : (fileInput.files ? fileInput.files[0] : null);
 
-            if (!titleVal || !subjectVal || !selectedFile) {
-                showToast("Please fill in all required fields and select a file.", false);
-                return;
+            let hasError = false;
+            if (!titleVal) {
+                const parent = resourceTitleInput.closest(".form-group");
+                if (parent) {
+                    parent.classList.add("has-error");
+                    const errEl = parent.querySelector(".field-error-text");
+                    if (errEl) {
+                        errEl.innerHTML = `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><span>Please enter a resource title.</span>`;
+                        errEl.style.display = "flex";
+                    }
+                }
+                hasError = true;
             }
 
-            // Validate File Size (<25MB)
-            if (selectedFile.size > 25 * 1024 * 1024) {
-                showToast("File size exceeds the 25 MB limit.", false);
-                return;
+            if (!subjectVal) {
+                const parent = resourceSubjectInput.closest(".form-group");
+                if (parent) {
+                    parent.classList.add("has-error");
+                    const errEl = parent.querySelector(".field-error-text");
+                    if (errEl) {
+                        errEl.innerHTML = `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><span>Please enter a subject name.</span>`;
+                        errEl.style.display = "flex";
+                    }
+                }
+                hasError = true;
             }
+
+            if (!selectedFile) {
+                if (fileUpload) fileUpload.showError("Please select or drop a resource file.");
+                hasError = true;
+            }
+
+            if (hasError) return;
 
             let isSuccess = false;
 
@@ -535,13 +584,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 isUploading = true;
                 submitUploadBtn.disabled = true;
                 if (cancelUploadBtn) cancelUploadBtn.disabled = true;
-                if (submitUploadLabel) submitUploadLabel.textContent = "Uploading file to Firebase Storage...";
+                submitUploadBtn.classList.add("btn-loading");
+                if (submitUploadLabel) submitUploadLabel.innerHTML = `<span class="btn-spinner"></span> <span>Uploading Resource...</span>`;
 
                 // 1. Upload File to Firebase Storage
                 const storageResult = await uploadResourceFile(selectedFile, currentUser.uid);
-                console.log("Firebase Storage Upload Succeeded:", storageResult);
-
-                if (submitUploadLabel) submitUploadLabel.textContent = "Creating Firestore record...";
 
                 // 2. Create Cloud Firestore Resource Document
                 const resourceId = await createResource({
@@ -558,21 +605,26 @@ document.addEventListener("DOMContentLoaded", () => {
                     uploaderName: currentUser.displayName || "Student"
                 });
 
-                console.log("Firestore Resource Record Created:", resourceId);
                 isSuccess = true;
-                showToast("Resource uploaded successfully!", true);
+                showToast("Academic resource uploaded successfully!", true);
 
                 closeUploadModal();
                 await loadResources();
 
             } catch (error) {
                 console.error("Resource Upload Process Error:", error);
-                showToast("Upload failed: " + (error.message || "Please check your network connection."), false);
+                showToast("Upload failed: " + (error.message || "Please check your connection."), false);
             } finally {
                 isUploading = false;
                 submitUploadBtn.disabled = false;
                 if (cancelUploadBtn) cancelUploadBtn.disabled = false;
-                if (submitUploadLabel) submitUploadLabel.textContent = "Upload File & Create Resource";
+                submitUploadBtn.classList.remove("btn-loading");
+                if (submitUploadLabel) submitUploadLabel.textContent = "Upload Resource";
+
+                if (isSuccess) {
+                    uploadResourceForm.reset();
+                    if (fileUpload) fileUpload.reset();
+                }
             }
         });
     }

@@ -246,20 +246,48 @@ document.addEventListener("DOMContentLoaded", () => {
             const emailVal = emailInput ? emailInput.value.trim() : "";
             const passVal = passwordInput ? passwordInput.value : "";
 
-            if (!emailVal || !passVal) {
-                showToast("Please enter your email and password.", false);
-                if (!emailVal && emailInput) emailInput.focus();
-                else if (!passVal && passwordInput) passwordInput.focus();
-                return;
+            let hasError = false;
+            if (!emailVal) {
+                const parent = emailInput.closest(".form-group");
+                if (parent) {
+                    parent.classList.add("has-error");
+                    const errEl = parent.querySelector(".field-error-text");
+                    if (errEl) {
+                        errEl.innerHTML = `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><span>Please enter your email address.</span>`;
+                        errEl.style.display = "flex";
+                    }
+                }
+                hasError = true;
+            } else {
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(emailVal)) {
+                    const parent = emailInput.closest(".form-group");
+                    if (parent) {
+                        parent.classList.add("has-error");
+                        const errEl = parent.querySelector(".field-error-text");
+                        if (errEl) {
+                            errEl.innerHTML = `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><span>Please enter a valid email address.</span>`;
+                            errEl.style.display = "flex";
+                        }
+                    }
+                    hasError = true;
+                }
             }
 
-            // Client-side email validation
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(emailVal)) {
-                showToast("Please enter a valid email address.", false);
-                if (emailInput) emailInput.focus();
-                return;
+            if (!passVal) {
+                const parent = passwordInput.closest(".form-group");
+                if (parent) {
+                    parent.classList.add("has-error");
+                    const errEl = parent.querySelector(".field-error-text");
+                    if (errEl) {
+                        errEl.innerHTML = `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><span>Please enter your password.</span>`;
+                        errEl.style.display = "flex";
+                    }
+                }
+                hasError = true;
             }
+
+            if (hasError) return;
 
             const submitBtn = loginForm.querySelector("button[type='submit']");
             const originalBtnHTML = submitBtn ? submitBtn.innerHTML : "";
@@ -268,7 +296,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 isAuthenticating = true;
                 if (submitBtn) {
                     submitBtn.disabled = true;
-                    submitBtn.innerHTML = "<span>Signing in...</span>";
+                    submitBtn.classList.add("btn-loading");
+                    submitBtn.innerHTML = `<span class="btn-spinner"></span> <span>Signing in...</span>`;
                 }
 
                 const result = await signInWithEmailAndPassword(auth, emailVal, passVal);

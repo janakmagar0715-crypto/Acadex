@@ -122,88 +122,101 @@
 
 /* Profile Dropdown Wrapper */
 .profile-menu-container {
-  position: relative;
+  position: relative !important;
+  display: inline-flex !important;
+  align-items: center !important;
 }
 
 .profile-trigger {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 4px 8px 4px 4px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: var(--surface-secondary);
-  cursor: pointer;
-  transition: var(--transition);
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding: 4px 10px 4px 4px !important;
+  border-radius: 999px !important;
+  border: 1px solid var(--border) !important;
+  background: var(--surface-secondary) !important;
+  color: var(--text) !important;
+  cursor: pointer !important;
+  transition: var(--transition-fast) !important;
+  user-select: none !important;
 }
 
 .profile-trigger:hover {
-  border-color: var(--primary);
-  background: var(--surface-hover);
+  border-color: var(--primary) !important;
+  background: var(--surface-hover) !important;
 }
 
 .user-avatar {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  object-fit: cover;
-  background: var(--primary);
-  color: #FFFFFF;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 13px;
-  font-weight: 700;
-  border: 2px solid var(--surface);
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  width: 34px !important;
+  height: 34px !important;
+  border-radius: 50% !important;
+  object-fit: cover !important;
+  background: var(--primary) !important;
+  color: #FFFFFF !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  border: 2px solid var(--surface) !important;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1) !important;
+  flex-shrink: 0 !important;
 }
 
 .user-name-label {
-  font-size: 13.5px;
-  font-weight: 600;
-  color: var(--text);
-  max-width: 120px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-size: 13.5px !important;
+  font-weight: 600 !important;
+  color: var(--text) !important;
+  max-width: 120px !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
 }
 
 .chevron-icon {
-  width: 14px;
-  height: 14px;
-  stroke: var(--text-muted);
-  stroke-width: 2.2;
-  fill: none;
-  margin-right: 4px;
-  transition: transform var(--transition-fast);
+  width: 14px !important;
+  height: 14px !important;
+  stroke: var(--text-muted) !important;
+  stroke-width: 2.2 !important;
+  fill: none !important;
+  margin-right: 2px !important;
+  flex-shrink: 0 !important;
+  transition: transform var(--transition-fast) !important;
 }
 
-.profile-trigger.active .chevron-icon {
-  transform: rotate(180deg);
+.profile-trigger.active .chevron-icon,
+.profile-trigger[aria-expanded="true"] .chevron-icon {
+  transform: rotate(180deg) !important;
 }
 
 /* Dropdown Menu */
 .user-dropdown {
-  position: absolute;
-  top: calc(100% + 10px);
-  right: 0;
-  width: 250px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  box-shadow: var(--shadow-card);
-  padding: 8px 0;
-  opacity: 0;
-  visibility: hidden;
-  transform: translateY(8px);
-  transition: opacity var(--transition-fast), transform var(--transition-fast), visibility var(--transition-fast);
-  z-index: 200;
+  position: absolute !important;
+  top: calc(100% + 10px) !important;
+  right: 0 !important;
+  left: auto !important;
+  width: 260px !important;
+  max-width: calc(100vw - 32px) !important;
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 16px !important;
+  box-shadow: var(--shadow-card), 0 12px 32px rgba(0, 0, 0, 0.25) !important;
+  padding: 8px 0 !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  transform: translateY(8px) !important;
+  transition: opacity var(--transition-fast), transform var(--transition-fast), visibility var(--transition-fast) !important;
+  z-index: 1000 !important;
+  pointer-events: none !important;
+  margin: 0 !important;
+  display: block !important;
 }
 
 .user-dropdown.show {
-  opacity: 1;
-  visibility: visible;
-  transform: translateY(0);
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: translateY(0) !important;
+  pointer-events: auto !important;
 }
 
 .dropdown-user-header {

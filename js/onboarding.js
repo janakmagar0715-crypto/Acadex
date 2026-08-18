@@ -327,16 +327,38 @@ document.addEventListener("DOMContentLoaded", () => {
     if (nextBtn) {
         nextBtn.addEventListener("click", async () => {
             // STEP 1 VALIDATION
+            // STEP 1 VALIDATION
             if (currentStep === 1) {
                 const firstVal = firstNameInput ? firstNameInput.value.trim() : "";
                 const lastVal = lastNameInput ? lastNameInput.value.trim() : "";
 
-                if (!firstVal || !lastVal) {
-                    showToast("Please enter your first and last name.", false);
-                    if (!firstVal && firstNameInput) firstNameInput.focus();
-                    else if (!lastVal && lastNameInput) lastNameInput.focus();
-                    return;
+                let hasError = false;
+                if (!firstVal && firstNameInput) {
+                    const parent = firstNameInput.closest("div");
+                    if (parent) {
+                        parent.classList.add("has-error");
+                        const errEl = parent.querySelector(".field-error-text");
+                        if (errEl) {
+                            errEl.innerHTML = `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><span>First name is required.</span>`;
+                            errEl.style.display = "flex";
+                        }
+                    }
+                    hasError = true;
                 }
+                if (!lastVal && lastNameInput) {
+                    const parent = lastNameInput.closest("div");
+                    if (parent) {
+                        parent.classList.add("has-error");
+                        const errEl = parent.querySelector(".field-error-text");
+                        if (errEl) {
+                            errEl.innerHTML = `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><span>Last name is required.</span>`;
+                            errEl.style.display = "flex";
+                        }
+                    }
+                    hasError = true;
+                }
+
+                if (hasError) return;
 
                 currentStep = 2;
                 updateStepUI();
@@ -349,13 +371,45 @@ document.addEventListener("DOMContentLoaded", () => {
                 const yrVal = yearSelect ? yearSelect.value : "";
                 const semVal = semesterSelect ? semesterSelect.value : "";
 
-                if (!deptVal || !yrVal || !semVal) {
-                    showToast("Please select your department, year, and semester.", false);
-                    if (!deptVal && departmentSelect) departmentSelect.focus();
-                    else if (!yrVal && yearSelect) yearSelect.focus();
-                    else if (!semVal && semesterSelect) semesterSelect.focus();
-                    return;
+                let hasError = false;
+                if (!deptVal && departmentSelect) {
+                    const parent = departmentSelect.closest(".form-group");
+                    if (parent) {
+                        parent.classList.add("has-error");
+                        const errEl = parent.querySelector(".field-error-text");
+                        if (errEl) {
+                            errEl.innerHTML = `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><span>Please select your department.</span>`;
+                            errEl.style.display = "flex";
+                        }
+                    }
+                    hasError = true;
                 }
+                if (!yrVal && yearSelect) {
+                    const parent = yearSelect.closest("div");
+                    if (parent) {
+                        parent.classList.add("has-error");
+                        const errEl = parent.querySelector(".field-error-text");
+                        if (errEl) {
+                            errEl.innerHTML = `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><span>Please select your academic year.</span>`;
+                            errEl.style.display = "flex";
+                        }
+                    }
+                    hasError = true;
+                }
+                if (!semVal && semesterSelect) {
+                    const parent = semesterSelect.closest("div");
+                    if (parent) {
+                        parent.classList.add("has-error");
+                        const errEl = parent.querySelector(".field-error-text");
+                        if (errEl) {
+                            errEl.innerHTML = `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><span>Please select your semester.</span>`;
+                            errEl.style.display = "flex";
+                        }
+                    }
+                    hasError = true;
+                }
+
+                if (hasError) return;
 
                 currentStep = 3;
                 updateStepUI();

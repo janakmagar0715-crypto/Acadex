@@ -189,15 +189,17 @@
 }
 
 /* Bookmark Toggle Active State */
-.bookmark-btn.bookmarked {
-  color: var(--lime);
-  background: rgba(132, 204, 22, 0.15);
-  border-color: rgba(132, 204, 22, 0.3);
+.bookmark-btn.bookmarked,
+#modalBookmarkBtn.bookmarked {
+  color: var(--lime, #84cc16) !important;
+  background: rgba(132, 204, 22, 0.15) !important;
+  border-color: rgba(132, 204, 22, 0.3) !important;
 }
 
-.bookmark-btn.bookmarked svg {
-  fill: var(--lime);
-  stroke: var(--lime);
+.bookmark-btn.bookmarked svg,
+#modalBookmarkBtn.bookmarked svg {
+  fill: var(--lime, #84cc16) !important;
+  stroke: var(--lime, #84cc16) !important;
 }
 
 /* Skeleton Shimmer Loader */

@@ -133,7 +133,7 @@
                 <form id="registerForm" novalidate>
 
                     <div class="form-group">
-                        <label for="fullName" class="form-label">Full Name</label>
+                        <label for="fullName" class="form-label">Full Name <span class="required-star">*</span></label>
                         <input 
                             id="fullName" 
                             type="text" 
@@ -142,10 +142,11 @@
                             required 
                             autocomplete="name"
                         >
+                        <div class="field-error-text" style="display: none;"></div>
                     </div>
 
                     <div class="form-group">
-                        <label for="email" class="form-label">Email address</label>
+                        <label for="email" class="form-label">Email address <span class="required-star">*</span></label>
                         <input 
                             id="email" 
                             type="email" 
@@ -154,10 +155,11 @@
                             required 
                             autocomplete="email"
                         >
+                        <div class="field-error-text" style="display: none;"></div>
                     </div>
 
                     <div class="form-group">
-                        <label for="password" class="form-label">Password</label>
+                        <label for="password" class="form-label">Password <span class="required-star">*</span></label>
                         <div class="input-wrapper">
                             <input 
                                 id="password" 

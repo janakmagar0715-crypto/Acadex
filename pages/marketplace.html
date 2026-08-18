@@ -42,7 +42,7 @@
                 <a href="past-papers.html" class="nav-link">Past Papers</a>
                 <a href="marketplace.html" class="nav-link active" aria-current="page">Marketplace</a>
                 <a href="notices.html" class="nav-link">Notices</a>
-                <a href="saved.html" class="nav-link">Saved</a>
+                <a href="saved-items.html" class="nav-link">Saved</a>
             </nav>
 
             <!-- Navigation Actions & Profile Dropdown -->
@@ -111,13 +111,13 @@
                 <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </button>
         </div>
-        <div class="drawer-links">
-            <a href="dashboard.html" class="drawer-link">Dashboard</a>
-            <a href="resources.html" class="drawer-link">Resources</a>
-            <a href="past-papers.html" class="drawer-link">Past Papers</a>
-            <a href="marketplace.html" class="drawer-link active">Marketplace</a>
-            <a href="notices.html" class="drawer-link">Notices</a>
-            <a href="saved.html" class="drawer-link">Saved</a>
+        <div class="drawer-links mobile-nav-links">
+            <a href="dashboard.html" class="drawer-link mobile-nav-link">Dashboard</a>
+            <a href="resources.html" class="drawer-link mobile-nav-link">Resources</a>
+            <a href="past-papers.html" class="drawer-link mobile-nav-link">Past Papers</a>
+            <a href="marketplace.html" class="drawer-link mobile-nav-link active">Marketplace</a>
+            <a href="notices.html" class="drawer-link mobile-nav-link">Notices</a>
+            <a href="saved-items.html" class="drawer-link mobile-nav-link">Saved</a>
         </div>
     </div>
     <div id="drawerOverlay" class="drawer-overlay"></div>
@@ -255,16 +255,25 @@
                     <textarea id="itemDescription" class="form-textarea" rows="3" placeholder="Condition details, pickup location, or included accessories..."></textarea>
                 </div>
 
-                <div class="form-group">
-                    <label for="fileInput" class="form-label">Item Picture (PNG, JPG - Max 10MB) *</label>
-                    <input type="file" id="fileInput" class="file-input-field" accept="image/*" required>
-                    <span id="fileInputHint" class="input-hint">Clear photo of the item helps sell faster.</span>
+                <div class="form-group" id="fileUploadContainer">
+                    <label for="fileInput" class="form-label">Item Picture (PNG, JPG - Max 10MB) <span class="required-star">*</span></label>
+                    <div class="file-dropzone">
+                        <div class="file-dropzone-inner">
+                            <div class="file-drop-icon">
+                                <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                            </div>
+                            <span class="file-drop-text">Drag & drop item photo here, or browse</span>
+                            <span class="file-drop-subtext">Supports PNG, JPG, WEBP (Max 10MB)</span>
+                        </div>
+                        <input type="file" id="fileInput" class="file-input-field" accept="image/*" required>
+                    </div>
+                    <div class="field-error-text" style="display: none;"></div>
                 </div>
 
                 <div class="modal-footer">
                     <button type="button" id="cancelUploadBtn" class="btn-secondary">Cancel</button>
                     <button type="submit" id="submitUploadBtn" class="btn-primary">
-                        <span id="submitUploadLabel">Post Listing</span>
+                        <span id="submitUploadLabel">Publish Listing</span>
                     </button>
                 </div>
             </form>

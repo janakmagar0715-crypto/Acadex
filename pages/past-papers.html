@@ -40,7 +40,9 @@
                 <a href="dashboard.html" class="nav-link">Dashboard</a>
                 <a href="resources.html" class="nav-link">Resources</a>
                 <a href="past-papers.html" class="nav-link active" aria-current="page">Past Papers</a>
-                <a href="#" class="nav-link" id="navMarketplaceLink">Marketplace</a>
+                <a href="marketplace.html" class="nav-link">Marketplace</a>
+                <a href="notices.html" class="nav-link">Notices</a>
+                <a href="saved-items.html" class="nav-link">Saved</a>
             </nav>
 
             <!-- Navigation Actions & Profile Dropdown -->
@@ -109,11 +111,13 @@
                 <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </button>
         </div>
-        <div class="drawer-links">
-            <a href="dashboard.html" class="drawer-link">Dashboard</a>
-            <a href="resources.html" class="drawer-link">Resources</a>
-            <a href="past-papers.html" class="drawer-link active">Past Papers</a>
-            <a href="#" class="drawer-link">Marketplace</a>
+        <div class="drawer-links mobile-nav-links">
+            <a href="dashboard.html" class="drawer-link mobile-nav-link">Dashboard</a>
+            <a href="resources.html" class="drawer-link mobile-nav-link">Resources</a>
+            <a href="past-papers.html" class="drawer-link mobile-nav-link active">Past Papers</a>
+            <a href="marketplace.html" class="drawer-link mobile-nav-link">Marketplace</a>
+            <a href="notices.html" class="drawer-link mobile-nav-link">Notices</a>
+            <a href="saved-items.html" class="drawer-link mobile-nav-link">Saved</a>
         </div>
     </div>
     <div id="drawerOverlay" class="drawer-overlay"></div>
@@ -321,16 +325,25 @@
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label for="fileInput" class="form-label">Exam Paper File (PDF or ZIP - Max 25MB) *</label>
-                    <input type="file" id="fileInput" class="file-input-field" accept=".pdf,.zip,.png,.jpg,.jpeg" required>
-                    <span id="fileInputHint" class="input-hint">Upload previous year exam questions or solution keys.</span>
+                <div class="form-group" id="fileUploadContainer">
+                    <label for="fileInput" class="form-label">Exam Paper File (PDF or ZIP - Max 25MB) <span class="required-star">*</span></label>
+                    <div class="file-dropzone">
+                        <div class="file-dropzone-inner">
+                            <div class="file-drop-icon">
+                                <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                            </div>
+                            <span class="file-drop-text">Drag & drop your exam paper here, or browse</span>
+                            <span class="file-drop-subtext">Supports PDF, ZIP, Images (Max 25MB)</span>
+                        </div>
+                        <input type="file" id="fileInput" class="file-input-field" accept=".pdf,.zip,.png,.jpg,.jpeg" required>
+                    </div>
+                    <div class="field-error-text" style="display: none;"></div>
                 </div>
 
                 <div class="modal-footer">
                     <button type="button" id="cancelUploadBtn" class="btn-secondary">Cancel</button>
                     <button type="submit" id="submitUploadBtn" class="btn-primary">
-                        <span id="submitUploadLabel">Upload File & Create Paper</span>
+                        <span id="submitUploadLabel">Upload Past Paper</span>
                     </button>
                 </div>
             </form>
@@ -377,7 +390,7 @@
             </div>
 
             <div class="modal-footer space-between">
-                <button id="modalBookmarkBtn" class="btn-secondary">
+                <button id="modalBookmarkBtn" class="btn-secondary bookmark-btn">
                     <svg class="btn-icon-svg" viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
                     <span id="modalBookmarkText">Save Bookmark</span>
                 </button>

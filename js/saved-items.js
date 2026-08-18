@@ -1,12 +1,13 @@
 /* ==========================================================================
-   ACADEX SAVED ITEMS V1 CONTROLLER (js/saved.js)
-   Auth protection, fetching user bookmarks subcollection, tab filters,
-   and bookmark removal engine.
+   ACADEX SAVED ITEMS CONTROLLER (js/saved-items.js)
+   Auth protection, loading user bookmarked resources from Firestore,
+   rendering resource cards with active green bookmark state, and immediate removal.
    ========================================================================== */
 
 import { auth, checkUserProfile } from "./firebase-config.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
 import { fetchUserBookmarks, removeBookmark } from "./services/bookmarks.js";
+import { fetchResourceById } from "./services/resources.js";
 import { initNavbar } from "./components/navbar.js";
 import { escapeHtml } from "./utils.js";
 
@@ -77,16 +78,16 @@ document.addEventListener("DOMContentLoaded", () => {
        3. STATE VARIABLES & DOM REFERENCES
        ---------------------------------------------------------------------- */
     let currentUser = null;
-    let allBookmarksList = [];
-    let activeFilterType = "all";
+    let savedResourcesList = [];
 
     const savedGrid = document.getElementById("savedGrid");
     const emptyState = document.getElementById("emptyState");
-    const tabButtons = document.querySelectorAll(".tab-btn");
+    const errorState = document.getElementById("errorState");
+    const retryFetchBtn = document.getElementById("retryFetchBtn");
 
     // Profile Dropdown Elements
-    const profileMenuBtn = document.getElementById("profileMenuBtn");
-    const profileDropdown = document.getElementById("profileDropdown");
+    const profileMenuBtn = document.getElementById("profileMenuBtn") || document.getElementById("profileTrigger");
+    const profileDropdown = document.getElementById("profileDropdown") || document.getElementById("userDropdown");
     const userAvatar = document.getElementById("userAvatar");
     const userNameLabel = document.getElementById("userNameLabel");
     const dropdownName = document.getElementById("dropdownName");
@@ -98,12 +99,24 @@ document.addEventListener("DOMContentLoaded", () => {
             e.stopPropagation();
             const isOpen = profileDropdown.classList.contains("show");
             profileDropdown.classList.toggle("show", !isOpen);
+            profileMenuBtn.classList.toggle("active", !isOpen);
             profileMenuBtn.setAttribute("aria-expanded", !isOpen);
         });
 
-        document.addEventListener("click", () => {
-            profileDropdown.classList.remove("show");
-            profileMenuBtn.setAttribute("aria-expanded", "false");
+        document.addEventListener("click", (e) => {
+            if (!profileDropdown.contains(e.target) && !profileMenuBtn.contains(e.target)) {
+                profileDropdown.classList.remove("show");
+                profileMenuBtn.classList.remove("active");
+                profileMenuBtn.setAttribute("aria-expanded", "false");
+            }
+        });
+
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "Escape") {
+                profileDropdown.classList.remove("show");
+                profileMenuBtn.classList.remove("active");
+                profileMenuBtn.setAttribute("aria-expanded", "false");
+            }
         });
     }
 
@@ -142,7 +155,7 @@ document.addEventListener("DOMContentLoaded", () => {
        ---------------------------------------------------------------------- */
     onAuthStateChanged(auth, async (user) => {
         if (!user) {
-            console.log("Saved Page: Unauthenticated user, redirecting to login.");
+            console.log("Saved Items Page: Unauthenticated user, redirecting to login.");
             window.location.href = "login.html";
             return;
         }
@@ -152,6 +165,7 @@ document.addEventListener("DOMContentLoaded", () => {
         try {
             const profileResult = await checkUserProfile(user.uid);
             if (!profileResult || !profileResult.profileComplete) {
+                console.log("Saved Items Page: Profile incomplete, redirecting to onboarding.");
                 window.location.href = "onboarding.html";
                 return;
             }
@@ -159,10 +173,10 @@ document.addEventListener("DOMContentLoaded", () => {
             const profileData = profileResult.data || {};
             renderUserProfile(user, profileData);
 
-            await loadSavedBookmarks();
+            await loadSavedResources();
 
         } catch (err) {
-            console.error("Saved Auth Observer Error:", err);
+            console.error("Saved Items Auth Observer Error:", err);
             window.location.href = "login.html";
         }
     });
@@ -185,114 +199,173 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    function formatFileSize(bytes) {
+        if (!bytes || bytes === 0) return "N/A";
+        const k = 1024;
+        const sizes = ["Bytes", "KB", "MB", "GB"];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
+    }
+
     /* ----------------------------------------------------------------------
-       5. FETCH & RENDER BOOKMARKS
+       5. FETCH & RENDER BOOKMARKED RESOURCES
        ---------------------------------------------------------------------- */
-    async function loadSavedBookmarks() {
+    async function loadSavedResources() {
         if (!savedGrid) return;
 
         savedGrid.style.display = "grid";
         savedGrid.innerHTML = `
             <div class="skeleton-card"><div class="skeleton-badge"></div><div class="skeleton-line title"></div><div class="skeleton-line meta"></div><div class="skeleton-actions"></div></div>
             <div class="skeleton-card"><div class="skeleton-badge"></div><div class="skeleton-line title"></div><div class="skeleton-line meta"></div><div class="skeleton-actions"></div></div>
+            <div class="skeleton-card"><div class="skeleton-badge"></div><div class="skeleton-line title"></div><div class="skeleton-line meta"></div><div class="skeleton-actions"></div></div>
         `;
         if (emptyState) emptyState.style.display = "none";
+        if (errorState) errorState.style.display = "none";
 
         try {
-            allBookmarksList = await fetchUserBookmarks(currentUser.uid);
-            renderFilteredBookmarks();
+            const rawBookmarks = await fetchUserBookmarks(currentUser.uid);
+            
+            // Resolve full resource document for each bookmark
+            const resourcePromises = rawBookmarks.map(async (b) => {
+                const targetId = b.targetId || (b.id ? b.id.replace(/^(resource|past_paper|marketplace_item)_/, "") : null);
+                if (!targetId) return null;
+
+                try {
+                    const resourceDoc = await fetchResourceById(targetId);
+                    if (resourceDoc) {
+                        return {
+                            ...resourceDoc,
+                            bookmarkType: b.targetType || "resource"
+                        };
+                    }
+                } catch (e) {
+                    console.warn(`Could not fetch details for targetId ${targetId}:`, e);
+                }
+
+                // Fallback to bookmark fields if document was deleted or custom
+                return {
+                    id: targetId,
+                    title: b.title || "Bookmarked Item",
+                    subject: b.subject || "",
+                    category: b.category || "notes",
+                    department: "General",
+                    uploaderName: "Student",
+                    fileType: "PDF",
+                    fileSize: 0,
+                    fileURL: "#",
+                    bookmarkType: b.targetType || "resource"
+                };
+            });
+
+            const resolvedList = await Promise.all(resourcePromises);
+            savedResourcesList = resolvedList.filter(item => item !== null);
+
+            if (savedResourcesList.length === 0) {
+                savedGrid.style.display = "none";
+                if (emptyState) emptyState.style.display = "flex";
+                return;
+            }
+
+            renderSavedGrid(savedResourcesList);
+
         } catch (error) {
-            console.error("Error fetching bookmarks:", error);
-            showToast("Failed to load saved items.", false);
+            console.error("Error fetching saved resources:", error);
+            savedGrid.style.display = "none";
+            if (errorState) errorState.style.display = "flex";
         }
     }
 
-    function renderFilteredBookmarks() {
-        const filtered = allBookmarksList.filter(item => {
-            if (activeFilterType === "all") return true;
-            return item.targetType === activeFilterType;
-        });
+    function renderSavedGrid(resources) {
+        if (!savedGrid) return;
 
-        if (filtered.length === 0) {
+        if (resources.length === 0) {
             savedGrid.style.display = "none";
             if (emptyState) emptyState.style.display = "flex";
             return;
         }
 
         if (emptyState) emptyState.style.display = "none";
+        if (errorState) errorState.style.display = "none";
+
         savedGrid.style.display = "grid";
+        savedGrid.innerHTML = resources.map(item => {
+            let badgeClass = "badge-notes";
+            const categoryUpper = (item.category || "Notes").toUpperCase();
+            if (item.category === "assignment") badgeClass = "badge-paper";
+            else if (item.category === "project") badgeClass = "badge-project";
+            else if (item.category === "guide") badgeClass = "badge-guide";
 
-        savedGrid.innerHTML = filtered.map(item => {
-            let targetPage = "resources.html";
-            let typeBadge = "RESOURCE";
-            let badgeClass = "badge-new";
-
-            if (item.targetType === "past_paper") {
-                targetPage = "past-papers.html";
-                typeBadge = "PAST PAPER";
-                badgeClass = "badge-midterm";
-            } else if (item.targetType === "marketplace_item") {
-                targetPage = "marketplace.html";
-                typeBadge = "MARKETPLACE";
-                badgeClass = "badge-fair";
-            }
+            const fileTypeUpper = (item.fileType || "PDF").toUpperCase();
+            const semesterText = item.semester ? `Semester ${escapeHtml(item.semester)}` : null;
 
             return `
                 <div class="resource-card" data-id="${escapeHtml(item.id)}">
                     <div>
                         <div class="resource-card-header">
-                            <span class="resource-type-badge ${badgeClass}">${escapeHtml(typeBadge)}</span>
+                            <span class="resource-type-badge ${badgeClass}">${escapeHtml(categoryUpper)}</span>
+                            <span class="meta-pill">${escapeHtml(fileTypeUpper)}</span>
                         </div>
-                        <h3 class="resource-title" style="margin-top: 10px;">${escapeHtml(item.title || 'Saved Item')}</h3>
-                        <div class="resource-meta-text">${escapeHtml(item.subject || '')} • ${escapeHtml(item.category || '')}</div>
+                        <h3 class="resource-title" style="margin-top: 10px;">${escapeHtml(item.title)}</h3>
+                        <div class="resource-meta-text">
+                            ${escapeHtml(item.subject)} • ${escapeHtml(item.department || 'General')} ${semesterText ? `• ${semesterText}` : ''}
+                        </div>
+                        <div class="meta-details-row">
+                            <span>By ${escapeHtml(item.uploaderName || 'Student')}</span>
+                            <span>•</span>
+                            <span>${formatFileSize(item.fileSize)}</span>
+                        </div>
                     </div>
 
                     <div class="resource-card-actions">
-                        <button class="btn-icon-secondary remove-bookmark-btn bookmark-btn" data-type="${escapeHtml(item.targetType)}" data-target-id="${escapeHtml(item.targetId)}" aria-label="Remove bookmark" title="Remove bookmark">
-                            <svg viewBox="0 0 24 24" style="stroke: var(--error); fill: rgba(239,68,68,0.1);"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                        <button class="btn-icon-secondary bookmark-btn bookmarked" data-id="${escapeHtml(item.id)}" data-type="${escapeHtml(item.bookmarkType || 'resource')}" aria-label="Remove bookmark" title="Remove from saved items">
+                            <svg viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
                         </button>
-                        <a href="${escapeHtml(targetPage)}" class="btn-primary" style="padding: 6px 14px; font-size: 13px; text-decoration: none;">View in Page</a>
+                        <a href="${escapeHtml(item.fileURL || '#')}" target="_blank" ${item.fileURL && item.fileURL !== '#' ? 'download' : ''} class="btn-primary" style="padding: 6px 14px; font-size: 13px; text-decoration: none;">
+                            View / Open
+                        </a>
                     </div>
                 </div>
             `;
         }).join("");
 
-        // Attach remove handlers
-        savedGrid.querySelectorAll(".remove-bookmark-btn").forEach(btn => {
+        // Attach Remove Bookmark Handlers
+        savedGrid.querySelectorAll(".bookmark-btn").forEach(btn => {
             btn.addEventListener("click", async (e) => {
                 e.stopPropagation();
-                const targetType = btn.getAttribute("data-type");
-                const targetId = btn.getAttribute("data-target-id");
-                await handleRemoveBookmark(targetType, targetId, btn);
+                const resId = btn.getAttribute("data-id");
+                const targetType = btn.getAttribute("data-type") || "resource";
+                await handleRemoveBookmark(resId, targetType, btn);
             });
         });
     }
 
-    async function handleRemoveBookmark(targetType, targetId, btnElement) {
+    /* ----------------------------------------------------------------------
+       6. REMOVE BOOKMARK HANDLER (IMMEDIATE DOM REMOVAL)
+       ---------------------------------------------------------------------- */
+    async function handleRemoveBookmark(resourceId, targetType, btnElement) {
+        if (!currentUser) return;
+
         if (btnElement) {
             btnElement.classList.add("bookmark-pop");
-            btnElement.addEventListener("animationend", () => btnElement.classList.remove("bookmark-pop"), { once: true });
         }
+
         try {
-            await removeBookmark(targetType, targetId);
-            allBookmarksList = allBookmarksList.filter(b => !(b.targetType === targetType && b.targetId === targetId));
-            showToast("Saved item removed.");
-            renderFilteredBookmarks();
+            await removeBookmark(targetType, resourceId);
+            
+            // Remove item from local state list
+            savedResourcesList = savedResourcesList.filter(item => item.id !== resourceId);
+            showToast("Resource removed from saved items.");
+
+            // Immediately re-render grid or show empty state if 0 items remain
+            renderSavedGrid(savedResourcesList);
+
         } catch (err) {
             console.error("Remove bookmark error:", err);
-            showToast("Could not remove item. Please try again.", false);
+            showToast("Could not remove bookmark. Please try again.", false);
         }
     }
 
-    /* ----------------------------------------------------------------------
-       6. TAB FILTER HANDLERS
-       ---------------------------------------------------------------------- */
-    tabButtons.forEach(btn => {
-        btn.addEventListener("click", () => {
-            tabButtons.forEach(b => b.classList.remove("active"));
-            btn.classList.add("active");
-            activeFilterType = btn.getAttribute("data-type");
-            renderFilteredBookmarks();
-        });
-    });
+    if (retryFetchBtn) {
+        retryFetchBtn.addEventListener("click", () => loadSavedResources());
+    }
 });

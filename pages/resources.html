@@ -38,8 +38,10 @@
             <nav class="nav-links" aria-label="Main Navigation">
                 <a href="dashboard.html" class="nav-link">Dashboard</a>
                 <a href="resources.html" class="nav-link active" aria-current="page">Resources</a>
-                <a href="past-papers.html" class="nav-link" id="navPapersLink">Past Papers</a>
-                <a href="#" class="nav-link" id="navMarketplaceLink">Marketplace</a>
+                <a href="past-papers.html" class="nav-link">Past Papers</a>
+                <a href="marketplace.html" class="nav-link">Marketplace</a>
+                <a href="notices.html" class="nav-link">Notices</a>
+                <a href="saved-items.html" class="nav-link">Saved</a>
             </nav>
 
             <!-- Navigation Actions & Profile Dropdown -->
@@ -104,11 +106,13 @@
                 <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </button>
         </div>
-        <div class="drawer-links">
-            <a href="dashboard.html" class="drawer-link">Dashboard</a>
-            <a href="resources.html" class="drawer-link active">Resources</a>
-            <a href="past-papers.html" class="drawer-link">Past Papers</a>
-            <a href="#" class="drawer-link">Marketplace</a>
+        <div class="drawer-links mobile-nav-links">
+            <a href="dashboard.html" class="drawer-link mobile-nav-link">Dashboard</a>
+            <a href="resources.html" class="drawer-link mobile-nav-link active">Resources</a>
+            <a href="past-papers.html" class="drawer-link mobile-nav-link">Past Papers</a>
+            <a href="marketplace.html" class="drawer-link mobile-nav-link">Marketplace</a>
+            <a href="notices.html" class="drawer-link mobile-nav-link">Notices</a>
+            <a href="saved-items.html" class="drawer-link mobile-nav-link">Saved</a>
         </div>
     </div>
     <div id="drawerOverlay" class="drawer-overlay"></div>
@@ -236,19 +240,21 @@
                 </button>
             </div>
 
-            <form id="uploadResourceForm" class="modal-form">
+            <form id="uploadResourceForm" class="modal-form" novalidate>
                 <div class="form-group">
-                    <label for="resourceTitle" class="form-label">Resource Title *</label>
+                    <label for="resourceTitle" class="form-label">Resource Title <span class="required-star">*</span></label>
                     <input type="text" id="resourceTitle" class="form-input" placeholder="e.g. Data Structures Chapter 1-5 Notes" required>
+                    <div class="field-error-text" style="display: none;"></div>
                 </div>
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="resourceSubject" class="form-label">Subject *</label>
+                        <label for="resourceSubject" class="form-label">Subject <span class="required-star">*</span></label>
                         <input type="text" id="resourceSubject" class="form-input" placeholder="e.g. Data Structures" required>
+                        <div class="field-error-text" style="display: none;"></div>
                     </div>
                     <div class="form-group">
-                        <label for="resourceCategory" class="form-label">Category *</label>
+                        <label for="resourceCategory" class="form-label">Category <span class="required-star">*</span></label>
                         <div class="select-wrapper">
                             <select id="resourceCategory" class="select-field" required>
                                 <option value="notes">Notes</option>
@@ -263,7 +269,7 @@
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="resourceDepartment" class="form-label">Department *</label>
+                        <label for="resourceDepartment" class="form-label">Department <span class="required-star">*</span></label>
                         <div class="select-wrapper">
                             <select id="resourceDepartment" class="select-field" required>
                                 <option value="Computer Science">Computer Science</option>
@@ -280,7 +286,7 @@
                         </div>
                     </div>
                     <div class="form-group">
-                        <label for="resourceSemester" class="form-label">Semester *</label>
+                        <label for="resourceSemester" class="form-label">Semester <span class="required-star">*</span></label>
                         <div class="select-wrapper">
                             <select id="resourceSemester" class="select-field" required>
                                 <option value="Semester 1">Semester 1</option>
@@ -302,16 +308,25 @@
                     <textarea id="resourceDescription" class="form-textarea" rows="3" placeholder="Brief details about what this document covers..."></textarea>
                 </div>
 
-                <div class="form-group">
-                    <label for="fileInput" class="form-label">Resource File (PDF, DOCX, ZIP - Max 25MB) *</label>
-                    <input type="file" id="fileInput" class="file-input-field" accept=".pdf,.docx,.doc,.zip,.png,.jpg,.jpeg,.webp" required>
-                    <span id="fileInputHint" class="input-hint">Select a file from your computer.</span>
+                <div class="form-group" id="fileUploadContainer">
+                    <label for="fileInput" class="form-label">Resource File (PDF, DOCX, ZIP - Max 25MB) <span class="required-star">*</span></label>
+                    <div class="file-dropzone">
+                        <div class="file-dropzone-inner">
+                            <div class="file-drop-icon">
+                                <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                            </div>
+                            <span class="file-drop-text">Drag & drop your file here, or browse</span>
+                            <span class="file-drop-subtext">Supports PDF, DOCX, ZIP, Images (Max 25MB)</span>
+                        </div>
+                        <input type="file" id="fileInput" class="file-input-field" accept=".pdf,.docx,.doc,.zip,.png,.jpg,.jpeg,.webp" required>
+                    </div>
+                    <div class="field-error-text" style="display: none;"></div>
                 </div>
 
                 <div class="modal-footer">
                     <button type="button" id="cancelUploadBtn" class="btn-secondary">Cancel</button>
                     <button type="submit" id="submitUploadBtn" class="btn-primary">
-                        <span id="submitUploadLabel">Upload File & Create Resource</span>
+                        <span id="submitUploadLabel">Upload Resource</span>
                     </button>
                 </div>
             </form>
@@ -352,7 +367,7 @@
             </div>
 
             <div class="modal-footer space-between">
-                <button id="modalBookmarkBtn" class="btn-secondary">
+                <button id="modalBookmarkBtn" class="btn-secondary bookmark-btn">
                     <svg class="btn-icon-svg" viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
                     <span id="modalBookmarkText">Save Bookmark</span>
                 </button>

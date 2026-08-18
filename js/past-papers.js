@@ -9,9 +9,12 @@ import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/
 import { fetchPastPapers, createPastPaper, deletePastPaper } from "./services/past-papers.js";
 import { uploadResourceFile } from "./services/storage.js";
 import { fetchUserBookmarks, addBookmark, removeBookmark } from "./services/bookmarks.js";
+import { initNavbar } from "./components/navbar.js";
+import { setupFileUpload } from "./components/file-upload.js";
 import { escapeHtml } from "./utils.js";
 
 document.addEventListener("DOMContentLoaded", () => {
+    initNavbar();
 
     /* ----------------------------------------------------------------------
        1. THEME CONTROLLER
@@ -364,6 +367,11 @@ document.addEventListener("DOMContentLoaded", () => {
     async function handleBookmarkToggle(paperId, btnElement) {
         if (!currentUser) return;
 
+        if (btnElement) {
+            btnElement.classList.add("bookmark-pop");
+            btnElement.addEventListener("animationend", () => btnElement.classList.remove("bookmark-pop"), { once: true });
+        }
+
         const isCurrentlyBookmarked = userBookmarksSet.has(paperId);
         const item = currentPapersList.find(p => p.id === paperId);
 
@@ -478,6 +486,8 @@ document.addEventListener("DOMContentLoaded", () => {
     if (modalBookmarkBtn) {
         modalBookmarkBtn.addEventListener("click", async () => {
             if (!currentActiveDetailsId) return;
+            modalBookmarkBtn.classList.add("bookmark-pop");
+            modalBookmarkBtn.addEventListener("animationend", () => modalBookmarkBtn.classList.remove("bookmark-pop"), { once: true });
             const cardBtn = papersGrid ? papersGrid.querySelector(`.bookmark-btn[data-id="${currentActiveDetailsId}"]`) : null;
             await handleBookmarkToggle(currentActiveDetailsId, cardBtn);
             updateModalBookmarkState();
@@ -503,10 +513,18 @@ document.addEventListener("DOMContentLoaded", () => {
     const paperSemesterInput = document.getElementById("paperSemester");
     const paperYearInput = document.getElementById("paperYear");
     const fileInput = document.getElementById("fileInput");
+    const fileUploadContainer = document.getElementById("fileUploadContainer");
+    const fileUpload = setupFileUpload({
+        containerElement: fileUploadContainer,
+        fileInputElement: fileInput,
+        maxSizeMB: 25,
+        allowedExtensions: [".pdf", ".zip", ".png", ".jpg", ".jpeg"]
+    });
 
     function openUploadModal() {
         if (!uploadPaperModal) return;
         uploadPaperForm.reset();
+        if (fileUpload) fileUpload.reset();
         uploadPaperModal.style.display = "flex";
     }
 
@@ -533,18 +551,41 @@ document.addEventListener("DOMContentLoaded", () => {
             const departmentVal = paperDepartmentInput.value;
             const semesterVal = paperSemesterInput.value;
             const yearVal = paperYearInput.value;
-            const selectedFile = fileInput.files[0];
+            const selectedFile = fileUpload ? fileUpload.getSelectedFile() : (fileInput.files ? fileInput.files[0] : null);
 
-            if (!titleVal || !subjectVal || !selectedFile) {
-                showToast("Please fill in all required fields and select a file.", false);
-                return;
+            let hasError = false;
+            if (!titleVal) {
+                const parent = paperTitleInput.closest(".form-group");
+                if (parent) {
+                    parent.classList.add("has-error");
+                    const errEl = parent.querySelector(".field-error-text");
+                    if (errEl) {
+                        errEl.innerHTML = `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><span>Please enter an exam title.</span>`;
+                        errEl.style.display = "flex";
+                    }
+                }
+                hasError = true;
             }
 
-            // Validate File Size (<25MB)
-            if (selectedFile.size > 25 * 1024 * 1024) {
-                showToast("File size exceeds the 25 MB limit.", false);
-                return;
+            if (!subjectVal) {
+                const parent = paperSubjectInput.closest(".form-group");
+                if (parent) {
+                    parent.classList.add("has-error");
+                    const errEl = parent.querySelector(".field-error-text");
+                    if (errEl) {
+                        errEl.innerHTML = `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><span>Please enter a subject name.</span>`;
+                        errEl.style.display = "flex";
+                    }
+                }
+                hasError = true;
             }
+
+            if (!selectedFile) {
+                if (fileUpload) fileUpload.showError("Please select or drop an exam paper file.");
+                hasError = true;
+            }
+
+            if (hasError) return;
 
             let isSuccess = false;
 
@@ -552,13 +593,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 isUploading = true;
                 submitUploadBtn.disabled = true;
                 if (cancelUploadBtn) cancelUploadBtn.disabled = true;
-                if (submitUploadLabel) submitUploadLabel.textContent = "Uploading file to Cloud Storage...";
+                submitUploadBtn.classList.add("btn-loading");
+                if (submitUploadLabel) submitUploadLabel.innerHTML = `<span class="btn-spinner"></span> <span>Uploading Past Paper...</span>`;
 
                 // 1. Upload File to Firebase Storage
                 const storageResult = await uploadResourceFile(selectedFile, currentUser.uid);
-                console.log("Storage Upload Succeeded:", storageResult);
-
-                if (submitUploadLabel) submitUploadLabel.textContent = "Creating Firestore paper record...";
 
                 // 2. Create Cloud Firestore Past Paper Document
                 const paperId = await createPastPaper({
@@ -576,7 +615,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     uploaderName: currentUser.displayName || "Student"
                 });
 
-                console.log("Firestore Past Paper Record Created:", paperId);
                 isSuccess = true;
                 showToast("Past examination paper uploaded successfully!", true);
 
@@ -590,7 +628,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 isUploading = false;
                 submitUploadBtn.disabled = false;
                 if (cancelUploadBtn) cancelUploadBtn.disabled = false;
-                if (submitUploadLabel) submitUploadLabel.textContent = "Upload File & Create Paper";
+                submitUploadBtn.classList.remove("btn-loading");
+                if (submitUploadLabel) submitUploadLabel.textContent = "Upload Past Paper";
+
+                if (isSuccess) {
+                    uploadPaperForm.reset();
+                    if (fileUpload) fileUpload.reset();
+                }
             }
         });
     }

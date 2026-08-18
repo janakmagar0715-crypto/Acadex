@@ -16,6 +16,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 import { subscribeResources } from "./services/resources.js";
 import { fetchUserBookmarks, addBookmark, removeBookmark } from "./services/bookmarks.js";
+import { initNavbar } from "./components/navbar.js";
 import { escapeHtml } from "./utils.js";
 
 /* ----------------------------------------------------------------------
@@ -35,6 +36,7 @@ const continueStudyingData = [
 ];
 
 document.addEventListener("DOMContentLoaded", () => {
+    initNavbar();
 
 
     /* ----------------------------------------------------------------------
@@ -208,12 +210,36 @@ document.addEventListener("DOMContentLoaded", () => {
             console.warn("Past papers stat subscription error:", e);
         }
 
-        // 3. Real-Time Stat Listener for User Saved Bookmarks
+        // Shared bookmark set to sync active button state
+        let userBookmarks = [];
+        if (user) {
+            try { userBookmarks = await fetchUserBookmarks(user.uid); } catch (e) { }
+        }
+        const bookmarkSet = new Set(userBookmarks.map(b => b.targetId));
+
+        // 3. Real-Time Stat & Sync Listener for User Saved Bookmarks
         if (user) {
             try {
                 const bookColRef = collection(db, "users", user.uid, "bookmarks");
                 onSnapshot(bookColRef, (snapshot) => {
                     if (statSav) statSav.textContent = snapshot.size;
+                    const newIds = new Set();
+                    snapshot.forEach(docSnap => {
+                        const data = docSnap.data();
+                        if (data.targetId) newIds.add(data.targetId);
+                    });
+                    bookmarkSet.clear();
+                    newIds.forEach(id => bookmarkSet.add(id));
+
+                    const resourcesList = document.getElementById("resourcesList");
+                    if (resourcesList) {
+                        resourcesList.querySelectorAll(".bookmark-btn").forEach(btn => {
+                            const resId = btn.getAttribute("data-id");
+                            if (resId) {
+                                btn.classList.toggle("bookmarked", bookmarkSet.has(resId));
+                            }
+                        });
+                    }
                 }, (err) => {
                     console.warn("Bookmarks stat listener warning:", err);
                 });
@@ -226,12 +252,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const resourcesList = document.getElementById("resourcesList");
         if (resourcesList) {
             try {
-                let userBookmarks = [];
-                if (user) {
-                    try { userBookmarks = await fetchUserBookmarks(user.uid); } catch (e) { }
-                }
-                const bookmarkSet = new Set(userBookmarks.map(b => b.targetId));
-
                 subscribeResources({ limitCount: 4 }, (liveResources, error) => {
                     if (error) {
                         console.error("Dashboard Firestore Resource Subscribe Error:", error);
@@ -276,6 +296,10 @@ document.addEventListener("DOMContentLoaded", () => {
                                 const resId = btn.getAttribute("data-id");
                                 const isSaved = bookmarkSet.has(resId);
                                 const item = liveResources.find(r => r.id === resId);
+
+                                // Trigger smooth click pop animation
+                                btn.classList.add("bookmark-pop");
+                                btn.addEventListener("animationend", () => btn.classList.remove("bookmark-pop"), { once: true });
 
                                 try {
                                     if (isSaved) {
